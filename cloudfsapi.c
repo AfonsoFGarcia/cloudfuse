@@ -341,6 +341,7 @@ int split_file_and_put(char* path, FILE* fp) {
   char* file;
   long size;
   int blocks, i;
+  int result = 1;
 
   fseek(fp, 0L, SEEK_END);
   size = ftell(fp);
@@ -376,11 +377,13 @@ int split_file_and_put(char* path, FILE* fp) {
 
     char *encoded = curl_escape(complete, 0);
     int response = send_split_request("PUT", encoded, buf, NULL, NULL, begin-end+1);
+    result = (response >= 200 && response < 300) && result;
   }
 
   fclose(f);
 
   free(file);
+  return result;
 }
 
 int cloudfs_object_write_fp(const char *path, FILE *fp)
