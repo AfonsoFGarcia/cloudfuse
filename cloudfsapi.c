@@ -272,7 +272,6 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
 static int send_split_request(char *method, const char *path, char *fp,
                         xmlParserCtxtPtr xmlctx, curl_slist *extra_headers, int size)
 {
-  FILE *f = fopen("/home/osboxes/log.txt", "w");
   char url[MAX_URL_SIZE];
   char *slash;
   long response = -1;
@@ -312,9 +311,15 @@ static int send_split_request(char *method, const char *path, char *fp,
 
     curl_easy_setopt(curl, CURLOPT_UPLOAD, 1);
     curl_easy_setopt(curl, CURLOPT_INFILESIZE, size);
+    FILE *f = fopen("/home/osboxes/log.txt", "w");
     fprintf(f, "READ DATA");
+    fclose(f);
+
     curl_easy_setopt(curl, CURLOPT_READDATA, fp);
+
+    f = fopen("/home/osboxes/log.txt", "a");
     fprintf(f, "DATA READ");
+    fclose(f);
 
     /* add the headers from extra_headers if any */
     curl_slist *extra;
