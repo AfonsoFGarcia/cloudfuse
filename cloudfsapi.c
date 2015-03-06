@@ -261,7 +261,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
     return 0;
   }
 
-  split_file_and_put(complete, fp);
+  split_file_and_put(path, fp);
 
   char *encoded = curl_escape(complete, 0);
   int response = send_request("PUT", encoded, fp, NULL, NULL);
@@ -379,7 +379,7 @@ int split_file_and_put(char* path, FILE* fp) {
     fprintf(f, "%s\n", buf);
 
     char *encoded = curl_escape(complete, 0);
-    int response = send_split_request("PUT", encoded, buf, NULL, NULL, begin-end+1);
+    //int response = send_split_request("PUT", encoded, buf, NULL, NULL, begin-end+1);
     result = (response >= 200 && response < 300) && result;
   }
 
