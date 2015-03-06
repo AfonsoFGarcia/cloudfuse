@@ -380,7 +380,7 @@ int split_file_and_put(char* path, FILE* fp) {
     fprintf(f, "Buffer size: %d\n", sizeof(buf));
 
 
-    strncpy(buf, &file[i*BLOCK_SIZE], begin-end);
+    strncpy(buf, &file[i*BLOCK_SIZE], end-begin);
 
     fprintf(f, "%s\n", buf);
 
