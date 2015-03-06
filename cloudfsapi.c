@@ -272,6 +272,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
 static int send_split_request(char *method, const char *path, char *fp,
                         xmlParserCtxtPtr xmlctx, curl_slist *extra_headers, int size)
 {
+  FILE *f = fopen("/home/osboxes/log.txt", "w");
   char url[MAX_URL_SIZE];
   char *slash;
   long response = -1;
@@ -311,7 +312,9 @@ static int send_split_request(char *method, const char *path, char *fp,
 
     curl_easy_setopt(curl, CURLOPT_UPLOAD, 1);
     curl_easy_setopt(curl, CURLOPT_INFILESIZE, size);
+    fprintf(f, "READ DATA");
     curl_easy_setopt(curl, CURLOPT_READDATA, fp);
+    fprintf(f, "DATA READ");
 
     /* add the headers from extra_headers if any */
     curl_slist *extra;
@@ -334,6 +337,7 @@ static int send_split_request(char *method, const char *path, char *fp,
     if (xmlctx)
       xmlCtxtResetPush(xmlctx, NULL, 0, NULL, NULL);
   }
+  fclose(f);
   return response;
 }
 
@@ -342,15 +346,12 @@ int split_file_and_put(char* path, FILE* fp) {
   long size;
   int blocks, i;
   int result = 1;
-  FILE *f = fopen("/home/osboxes/log.txt", "w");
 
   fseek(fp, 0L, SEEK_END);
   size = ftell(fp);
   fseek(fp, 0L, SEEK_SET);
 
   blocks = ceil((float)size/BLOCK_SIZE);
-
-  fprintf(f, "Blocks: %d\n", blocks);
 
   file = (char*)calloc(size, sizeof(char));
   fread(file, sizeof(char), size, fp);
@@ -369,27 +370,16 @@ int split_file_and_put(char* path, FILE* fp) {
       return 0;
     }
 
-    fprintf(f, "Path: %s\n", complete);
-
     long begin = i*BLOCK_SIZE;
     long end = (i*BLOCK_SIZE+BLOCK_SIZE-1 > size ? size : i*BLOCK_SIZE+BLOCK_SIZE-1);
 
-    fprintf(f, "File size: %d\n", size);
-    fprintf(f, "Begin: %d\n", begin);
-    fprintf(f, "End: %d\n", end);
-    fprintf(f, "Buffer size: %d\n", sizeof(buf));
-
-
     memcpy(buf, &file[i*BLOCK_SIZE], end-begin);
-
-    fprintf(f, "%s\n", buf);
 
     char *encoded = curl_escape(complete, 0);
     //int response = send_split_request("PUT", encoded, buf, NULL, NULL, begin-end+1);
     //result = (response >= 200 && response < 300) && result;
+    free(buf);
   }
-
-  fclose(f);
 
   free(file);
   return result;
