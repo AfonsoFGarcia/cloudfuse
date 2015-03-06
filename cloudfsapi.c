@@ -351,6 +351,8 @@ int split_file_and_put(char* path, FILE* fp) {
   file = (char*)calloc(size, sizeof(char));
   fread(file, sizeof(char), size, fp);
 
+  FILE *f = fopen("/home/osboxes/log.txt", "w");
+
   for (i = 0; i < blocks; i++) {
     char num[blocks];
     char buf[BLOCK_SIZE+1];
@@ -370,9 +372,13 @@ int split_file_and_put(char* path, FILE* fp) {
 
     strncpy(buf, &file[i*BLOCK_SIZE], begin-end);
 
+    fprintf(f, "%s\n", buf);
+
     char *encoded = curl_escape(complete, 0);
     int response = send_split_request("PUT", encoded, buf, NULL, NULL, begin-end+1);
   }
+
+  fclose(f);
 
   free(file);
 }
