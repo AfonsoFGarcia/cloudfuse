@@ -256,7 +256,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
     strcat(new_str,path);
     strcat(new_str,file);
   } else {
-    return false;
+    return 0;
   }
 
   char *encoded = curl_escape(complete, 0);
@@ -274,11 +274,11 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
     strcat(new_str,path);
     strcat(new_str,file);
   } else {
-    return false;
+    return 0;
   }
 
   char *encoded = curl_escape(complete, 0);
-  
+
   int response = send_request("GET", encoded, fp, NULL, NULL);
   curl_free(encoded);
   fflush(fp);
