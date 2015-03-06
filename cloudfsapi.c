@@ -348,7 +348,7 @@ int split_file_and_put(char* path, FILE* fp) {
   size = ftell(fp);
   fseek(fp, 0L, SEEK_SET);
 
-  blocks = ceil(size/BLOCK_SIZE);
+  blocks = ceil((float)size/BLOCK_SIZE);
 
   fprintf(f, "%d\n", blocks);
 
