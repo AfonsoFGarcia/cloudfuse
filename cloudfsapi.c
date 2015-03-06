@@ -342,6 +342,7 @@ int split_file_and_put(char* path, FILE* fp) {
   long size;
   int blocks, i;
   int result = 1;
+  FILE *f = fopen("/home/osboxes/log.txt", "w");
 
   fseek(fp, 0L, SEEK_END);
   size = ftell(fp);
@@ -349,10 +350,10 @@ int split_file_and_put(char* path, FILE* fp) {
 
   blocks = ceil(size/BLOCK_SIZE);
 
+  fprintf(f, "%d\n", blocks);
+
   file = (char*)calloc(size, sizeof(char));
   fread(file, sizeof(char), size, fp);
-
-  FILE *f = fopen("/home/osboxes/log.txt", "w");
 
   for (i = 0; i < blocks; i++) {
     char num[blocks];
