@@ -380,6 +380,10 @@ int cloudfs_list_directory(const char *path, dir_entry **dir_list)
           {
             de->name = strdup(content + prefix_length);
 
+            FILE *f = fopen("/home/osboxes/log.txt", "a");
+        	fprintf(f, "%s, %s", de->name, de->full_name);
+        	fclose(f);
+
             // Remove trailing slash
             char *slash = strrchr(de->name, '/');
             if (slash && (0 == *(slash + 1)))
