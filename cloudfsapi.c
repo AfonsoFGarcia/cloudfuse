@@ -350,7 +350,7 @@ int split_file_and_put(char* path, FILE* fp) {
 
   blocks = ceil((float)size/BLOCK_SIZE);
 
-  fprintf(f, "%d\n", blocks);
+  fprintf(f, "Blocks: %d\n", blocks);
 
   file = (char*)calloc(size, sizeof(char));
   fread(file, sizeof(char), size, fp);
@@ -368,6 +368,8 @@ int split_file_and_put(char* path, FILE* fp) {
     } else {
       return 0;
     }
+
+    fprintf(f, "Path: %s\n", complete);
 
     long begin = i*BLOCK_SIZE;
     long end = (i*BLOCK_SIZE+BLOCK_SIZE-1 > size ? size : i*BLOCK_SIZE+BLOCK_SIZE-1);
