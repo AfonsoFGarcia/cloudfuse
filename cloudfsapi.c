@@ -248,7 +248,18 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
 {
   fflush(fp);
   rewind(fp);
-  char *encoded = curl_escape(path, 0);
+
+  char * complete ;
+  char file[] = ".file";
+  if((new_str = malloc(strlen(path)+strlen(file)+1)) != NULL){
+    new_str[0] = '\0';   // ensures the memory is an empty string
+    strcat(new_str,path);
+    strcat(new_str,file);
+  } else {
+    return false;
+  }
+
+  char *encoded = curl_escape(complete, 0);
   int response = send_request("PUT", encoded, fp, NULL, NULL);
   curl_free(encoded);
   return (response >= 200 && response < 300);
@@ -256,7 +267,18 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
 
 int cloudfs_object_write_fp(const char *path, FILE *fp)
 {
-  char *encoded = curl_escape(path, 0);
+  char * complete ;
+  char file[] = ".file";
+  if((new_str = malloc(strlen(path)+strlen(file)+1)) != NULL){
+    new_str[0] = '\0';   // ensures the memory is an empty string
+    strcat(new_str,path);
+    strcat(new_str,file);
+  } else {
+    return false;
+  }
+
+  char *encoded = curl_escape(complete, 0);
+  
   int response = send_request("GET", encoded, fp, NULL, NULL);
   curl_free(encoded);
   fflush(fp);
