@@ -342,7 +342,6 @@ static int send_split_request(char *method, const char *path, char *fp,
     if (xmlctx)
       xmlCtxtResetPush(xmlctx, NULL, 0, NULL, NULL);
   }
-  fclose(f);
   return response;
 }
 
