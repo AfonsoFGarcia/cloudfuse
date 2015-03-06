@@ -250,7 +250,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   rewind(fp);
 
   char * complete ;
-  char file[] = ".file";
+  char file[] = ".";
   if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
     complete[0] = '\0';   // ensures the memory is an empty string
     strcat(complete,path);
@@ -268,7 +268,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
 int cloudfs_object_write_fp(const char *path, FILE *fp)
 {
   char * complete ;
-  char file[] = ".file";
+  char file[] = ".";
   if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
     complete[0] = '\0';   // ensures the memory is an empty string
     strcat(complete,path);
@@ -380,14 +380,15 @@ int cloudfs_list_directory(const char *path, dir_entry **dir_list)
           {
             de->name = strdup(content + prefix_length);
 
-            FILE *f = fopen("/home/osboxes/log.txt", "a");
-        	fprintf(f, "%s, %s", de->name, de->full_name);
-        	fclose(f);
-
             // Remove trailing slash
             char *slash = strrchr(de->name, '/');
             if (slash && (0 == *(slash + 1)))
               *slash = 0;
+            
+            // Remove trailing .
+            char *dotfile = strrchr(de->name, '.');
+            if (dotfile && (0 == *(dotfile + 1)))
+              *dotfile = 0;
 
             if (asprintf(&(de->full_name), "%s/%s", path, de->name) < 0)
               de->full_name = NULL;
