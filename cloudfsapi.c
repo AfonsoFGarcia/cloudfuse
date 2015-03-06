@@ -267,6 +267,74 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   return (response >= 200 && response < 300);
 }
 
+static int send_split_request(char *method, const char *path, char *fp,
+                        xmlParserCtxtPtr xmlctx, curl_slist *extra_headers, int size)
+{
+  char url[MAX_URL_SIZE];
+  char *slash;
+  long response = -1;
+  int tries = 0;
+
+  if (!storage_url[0])
+  {
+    debugf("send_request with no storage_url?");
+    abort();
+  }
+
+  while ((slash = strstr(path, "%2F")) || (slash = strstr(path, "%2f")))
+  {
+    *slash = '/';
+    memmove(slash+1, slash+3, strlen(slash+3)+1);
+  }
+  while (*path == '/')
+    path++;
+  snprintf(url, sizeof(url), "%s/%s", storage_url, path);
+
+  // retry on failures
+  for (tries = 0; tries < REQUEST_RETRIES; tries++)
+  {
+    CURL *curl = get_connection(path);
+    if (rhel5_mode)
+      curl_easy_setopt(curl, CURLOPT_CAINFO, RHEL5_CERTIFICATE_FILE);
+    curl_slist *headers = NULL;
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_HEADER, 0);
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
+    curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, USER_AGENT);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, verify_ssl);
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10);
+    curl_easy_setopt(curl, CURLOPT_VERBOSE, debug);
+    add_header(&headers, "X-Auth-Token", storage_token);
+
+    curl_easy_setopt(curl, CURLOPT_UPLOAD, 1);
+    curl_easy_setopt(curl, CURLOPT_INFILESIZE, size);
+    curl_easy_setopt(curl, CURLOPT_READDATA, fp);
+
+    /* add the headers from extra_headers if any */
+    curl_slist *extra;
+    for (extra = extra_headers; extra; extra = extra->next)
+    {
+      debugf("adding header: %s", extra->data);
+      headers = curl_slist_append(headers, extra->data);
+    }
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_perform(curl);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response);
+    curl_slist_free_all(headers);
+    curl_easy_reset(curl);
+    return_connection(curl);
+    if (response >= 200 && response < 400)
+      return response;
+    sleep(8 << tries); // backoff
+    if (response == 401 && !cloudfs_connect()) // re-authenticate on 401s
+      return response;
+    if (xmlctx)
+      xmlCtxtResetPush(xmlctx, NULL, 0, NULL, NULL);
+  }
+  return response;
+}
+
 int split_file_and_put(char* path, FILE* fp) {
   char* file;
   long size;
@@ -274,7 +342,7 @@ int split_file_and_put(char* path, FILE* fp) {
 
   fseek(fp, 0L, SEEK_END);
   size = ftell(fp);
-  fseek(fp, OL, SEEK_SET);
+  fseek(fp, 0L, SEEK_SET);
 
   blocks = ceil(size/BLOCK_SIZE);
 
@@ -301,7 +369,7 @@ int split_file_and_put(char* path, FILE* fp) {
     strncpy(buf, &file[i*BLOCK_SIZE], begin-end);
 
     char *encoded = curl_escape(complete, 0);
-    int response = send_request("PUT", encoded, buf, NULL, NULL);
+    int response = send_split_request("PUT", encoded, buf, NULL, NULL, begin-end+1);
   }
 
   free(file);
