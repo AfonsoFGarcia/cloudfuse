@@ -272,6 +272,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
 static int send_split_request(char *method, const char *path, char *fp,
                         xmlParserCtxtPtr xmlctx, curl_slist *extra_headers, int size)
 {
+  FILE *f;
   char url[MAX_URL_SIZE];
   char *slash;
   long response = -1;
@@ -311,15 +312,8 @@ static int send_split_request(char *method, const char *path, char *fp,
 
     curl_easy_setopt(curl, CURLOPT_UPLOAD, 1);
     curl_easy_setopt(curl, CURLOPT_INFILESIZE, size);
-    FILE *f = fopen("/home/osboxes/log.txt", "w");
-    fprintf(f, "READ DATA");
-    fclose(f);
 
     curl_easy_setopt(curl, CURLOPT_READDATA, fp);
-
-    f = fopen("/home/osboxes/log.txt", "a");
-    fprintf(f, "DATA READ");
-    fclose(f);
 
     /* add the headers from extra_headers if any */
     curl_slist *extra;
@@ -329,7 +323,13 @@ static int send_split_request(char *method, const char *path, char *fp,
       headers = curl_slist_append(headers, extra->data);
     }
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    f = fopen("/home/osboxes/log.txt", "w");
+    fprintf(f, "PERFORM");
+    fclose(f);
     curl_easy_perform(curl);
+    f = fopen("/home/osboxes/log.txt", "a");
+    fprintf(f, "PERFORMED");
+    fclose(f);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response);
     curl_slist_free_all(headers);
     curl_easy_reset(curl);
