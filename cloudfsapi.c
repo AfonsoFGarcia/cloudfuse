@@ -357,7 +357,7 @@ int split_file_and_put(char* path, FILE* fp) {
 
   for (i = 0; i < blocks; i++) {
     char num[blocks];
-    char buf[BLOCK_SIZE+1];
+    char *buf = (char*)calloc(sizeof(char),BLOCK_SIZE+1);
     sprintf(num, ".%d", i);
 
     char * complete ;
