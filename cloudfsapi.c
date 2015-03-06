@@ -9,6 +9,7 @@
 #endif
 #include <pthread.h>
 #include <time.h>
+#include <math.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -22,6 +23,7 @@
 #define RHEL5_CERTIFICATE_FILE "/etc/pki/tls/certs/ca-bundle.crt"
 
 #define REQUEST_RETRIES 4
+#define BLOCK_SIZE 16384
 
 static char storage_url[MAX_URL_SIZE];
 static char storage_token[MAX_HEADER_SIZE];
@@ -263,6 +265,46 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   int response = send_request("PUT", encoded, fp, NULL, NULL);
   curl_free(encoded);
   return (response >= 200 && response < 300);
+}
+
+int split_file_and_put(char* path, FILE* fp) {
+  char* file;
+  long size;
+  int blocks, i;
+
+  fseek(fp, 0L, SEEK_END);
+  size = ftell(fp);
+  fseek(fp, OL, SEEK_SET);
+
+  blocks = ceil(size/BLOCK_SIZE);
+
+  file = (char*)calloc(size, sizeof(char));
+  fread(file, sizeof(char), size, fp);
+
+  for (i = 0; i < blocks; i++) {
+    char num[blocks];
+    char buf[BLOCK_SIZE+1];
+    sprintf(num, "%d", i);
+
+    char * complete ;
+    if((complete = malloc(strlen(path)+strlen(num)+1)) != NULL){
+      complete[0] = '\0';   // ensures the memory is an empty string
+      strcat(complete,path);
+      strcat(complete,num);
+    } else {
+      return 0;
+    }
+
+    long begin = i*BLOCK_SIZE;
+    long end = (i*BLOCK_SIZE+BLOCK_SIZE-1 > size ? size : i*BLOCK_SIZE+BLOCK_SIZE-1);
+
+    strncpy(buf, &file[i*BLOCK_SIZE], begin-end);
+
+    char *encoded = curl_escape(complete, 0);
+    int response = send_request("PUT", encoded, buf, NULL, NULL);
+  }
+
+  free(file);
 }
 
 int cloudfs_object_write_fp(const char *path, FILE *fp)
