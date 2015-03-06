@@ -385,8 +385,8 @@ int split_file_and_put(char* path, FILE* fp) {
     fprintf(f, "%s\n", buf);
 
     char *encoded = curl_escape(complete, 0);
-    int response = send_split_request("PUT", encoded, buf, NULL, NULL, begin-end+1);
-    result = (response >= 200 && response < 300) && result;
+    //int response = send_split_request("PUT", encoded, buf, NULL, NULL, begin-end+1);
+    //result = (response >= 200 && response < 300) && result;
   }
 
   fclose(f);
