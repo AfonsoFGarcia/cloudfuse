@@ -261,6 +261,8 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
     return 0;
   }
 
+  split_file_and_put(complete, fp);
+
   char *encoded = curl_escape(complete, 0);
   int response = send_request("PUT", encoded, fp, NULL, NULL);
   curl_free(encoded);
@@ -352,7 +354,7 @@ int split_file_and_put(char* path, FILE* fp) {
   for (i = 0; i < blocks; i++) {
     char num[blocks];
     char buf[BLOCK_SIZE+1];
-    sprintf(num, "%d", i);
+    sprintf(num, ".%d", i);
 
     char * complete ;
     if((complete = malloc(strlen(path)+strlen(num)+1)) != NULL){
