@@ -374,6 +374,12 @@ int split_file_and_put(char* path, FILE* fp) {
     long begin = i*BLOCK_SIZE;
     long end = (i*BLOCK_SIZE+BLOCK_SIZE-1 > size ? size-1 : i*BLOCK_SIZE+BLOCK_SIZE-1);
 
+    fprintf(f, "File size: %d\n", size);
+    fprintf(f, "Begin: %d\n", begin);
+    fprintf(f, "End: %d\n", end);
+    fprintf(f, "Buffer size: %d\n", sizeof(buf));
+
+
     strncpy(buf, &file[i*BLOCK_SIZE], begin-end);
 
     fprintf(f, "%s\n", buf);
