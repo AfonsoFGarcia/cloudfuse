@@ -251,10 +251,10 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
 
   char * complete ;
   char file[] = ".file";
-  if((new_str = malloc(strlen(path)+strlen(file)+1)) != NULL){
-    new_str[0] = '\0';   // ensures the memory is an empty string
-    strcat(new_str,path);
-    strcat(new_str,file);
+  if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
+    complete[0] = '\0';   // ensures the memory is an empty string
+    strcat(complete,path);
+    strcat(complete,file);
   } else {
     return 0;
   }
@@ -269,10 +269,10 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
 {
   char * complete ;
   char file[] = ".file";
-  if((new_str = malloc(strlen(path)+strlen(file)+1)) != NULL){
-    new_str[0] = '\0';   // ensures the memory is an empty string
-    strcat(new_str,path);
-    strcat(new_str,file);
+  if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
+    complete[0] = '\0';   // ensures the memory is an empty string
+    strcat(complete,path);
+    strcat(complete,file);
   } else {
     return 0;
   }
