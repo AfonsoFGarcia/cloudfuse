@@ -595,7 +595,10 @@ int delete_objects(const char* path, int blocks) {
 
 int cloudfs_delete_object(const char *path)
 {
-  
+  FILE *log = fopen("/home/osboxes/log.txt", "w");
+  fprintf(log, "COPY CALL HOME");
+  fclose(log);
+
   char * complete ;
   char file[] = ".";
   if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
