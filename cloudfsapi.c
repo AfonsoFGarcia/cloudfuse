@@ -260,7 +260,6 @@ int split_file_and_put(char* path, FILE* fp, FILE* temp) {
 
   fprintf(temp, "%d", blocks);
 
-  file = (char*)calloc(size, sizeof(char));
   fread(file, sizeof(char), size, fp);
 
   for (i = 0; i < blocks; i++) {
@@ -325,7 +324,8 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
 int rebuild_file(char* path, FILE *fp, int blocks) {
   int i;
   int result = 1;
-  
+  fseek(fp, 0L, SEEK_SET);
+
   for (i = 0; i < blocks; i++) {
     char num[blocks];
     char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
@@ -348,7 +348,6 @@ int rebuild_file(char* path, FILE *fp, int blocks) {
     fflush(tmp);
 
     fseek(tmp, 0L, SEEK_SET);
-    fseek(fp, 0L, SEEK_SET);
 
     unsigned char buf2[255];
     size_t size;
@@ -361,6 +360,7 @@ int rebuild_file(char* path, FILE *fp, int blocks) {
 
     fclose(tmp);
   }
+  fflush(fp);
   return result;
 }
 
