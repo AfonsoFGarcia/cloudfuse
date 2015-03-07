@@ -674,7 +674,7 @@ int cloudfs_copy_object(const char *src, const char *dst)
   char *dstd = add_dot_to_path(dst);
   int blocks = get_file_metadata(srcd);
 
-  int result = copy_objects(srd, dst, blocks);
+  int result = copy_objects(src, dst, blocks);
 
   char *dst_encoded = curl_escape(dstd, 0);
   curl_slist *headers = NULL;
