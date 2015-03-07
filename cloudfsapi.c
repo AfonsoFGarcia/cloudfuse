@@ -265,7 +265,7 @@ int get_file_metadata(char *path) {
   FILE *tmp = tmpfile();
   int blocks = 0;
   int response = send_request("GET", encoded, tmp, NULL, NULL);
-  if (!(response >= 200 && response < 300)) return 0;
+  if (!(response >= 200 && response < 300)) return -1;
   fflush(tmp);
 
   char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
@@ -282,7 +282,7 @@ int get_file_metadata(char *path) {
   return blocks;
 }
 
-int split_file_and_put(char* path, FILE* fp, FILE* temp) {
+int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   char* file;
   long size;
   int blocks, i;
@@ -347,7 +347,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   return (response >= 200 && response < 300);
 }
 
-int rebuild_file(char* path, FILE *fp, int blocks) {
+int rebuild_file(const char* path, FILE *fp, int blocks) {
   int i;
   int result = 1;
   fseek(fp, 0L, SEEK_SET);
@@ -393,7 +393,7 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
   int result = rebuild_file(path, fp, blocks);
 
   fflush(fp);
-  if (((response >= 200 && response < 300) && result) || ftruncate(fileno(fp), 0))
+  if (((blocks == -1) && result) || ftruncate(fileno(fp), 0))
     return 1;
   rewind(fp);
   return 0;
