@@ -632,11 +632,49 @@ int cloudfs_delete_object(const char *path)
   return result && (response >= 200 && response < 300);
 }
 
+int copy_objects(const char* src, const char* dst, int blocks) {
+  int i, result = 1;
+
+  for(i = 0; i < blocks; i++) {
+    char num[blocks];
+    sprintf(num, ".%d.", i);
+
+    char * srcd, dstd;
+    if((srcd = malloc(strlen(src)+strlen(num)+1)) != NULL){
+      srcd[0] = '\0';   // ensures the memory is an empty string
+      strcat(srcd,src);
+      strcat(srcd,num);
+    } else {
+      return 0;
+    }
+    if((dstd = malloc(strlen(dst)+strlen(num)+1)) != NULL){
+      dstd[0] = '\0';   // ensures the memory is an empty string
+      strcat(dstd,dst);
+      strcat(dstd,num);
+    } else {
+      return 0;
+    }
+
+    char *dst_encoded = curl_escape(dstd, 0);
+    curl_slist *headers = NULL;
+    add_header(&headers, "X-Copy-From", srcd);
+    add_header(&headers, "Content-Length", "0");
+    int response = send_request("PUT", dst_encoded, NULL, NULL, headers);
+    curl_free(dst_encoded);
+    curl_slist_free_all(headers);
+    result = result && (response >= 200 && response < 300); 
+  }
+
+  return result;
+}
+
 int cloudfs_copy_object(const char *src, const char *dst)
 {
   char *srcd = add_dot_to_path(src);
   char *dstd = add_dot_to_path(dst);
   int blocks = get_file_metadata(srcd);
+
+  int result = copy_objects(srd, dst, blocks);
 
   char *dst_encoded = curl_escape(dstd, 0);
   curl_slist *headers = NULL;
