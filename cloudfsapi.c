@@ -374,6 +374,7 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
   int blocks = 0;
   int response = send_request("GET", encoded, tmp, NULL, NULL);
   curl_free(encoded);
+  fflush(tmp);
   fscanf(tmp, "%d\n", &blocks);
   fclose(tmp);
 
