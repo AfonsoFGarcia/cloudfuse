@@ -324,7 +324,6 @@ int split_file_and_put(char* path, FILE* fp, FILE* temp) {
 int rebuild_file(char* path, FILE *fp, int blocks) {
   int i;
   int result = 1;
-  FILE *f = fopen("/home/osboxes/log.txt", "w");
   for (i = 0; i < blocks; i++) {
     char num[blocks];
     char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
@@ -352,12 +351,8 @@ int rebuild_file(char* path, FILE *fp, int blocks) {
 
     fread(buf, sizeof(char), size, tmp);
     fclose(tmp);
-
-    fprintf(f, "%s", buf);
-
-    fprintf(fp, "%s", buf);
+    fwrite(buf, sizeof(char), size, fp);
   }
-  fclose(f);
   return result;
 }
 
