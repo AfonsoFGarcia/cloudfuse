@@ -325,7 +325,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
 int rebuild_file(char* path, FILE *fp, int blocks) {
   int i;
   int result = 1;
-  FILE *log = fopen("/home/osboxes/log.txt", "r");
+  
   for (i = 0; i < blocks; i++) {
     char num[blocks];
     char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
@@ -355,11 +355,12 @@ int rebuild_file(char* path, FILE *fp, int blocks) {
     while( (size = fread(buf2, 1, sizeof(buf2), tmp) ) > 0)
       fwrite(buf2, 1, size, fp);
 
+    FILE *log = fopen("/home/osboxes/log.txt", "a");
     fprintf(log, "WROTE PIECE %d\n", i);
+    fclose(log);
 
     fclose(tmp);
   }
-  fclose(log);
   return result;
 }
 
