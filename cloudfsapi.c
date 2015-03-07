@@ -375,12 +375,20 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
   int response = send_request("GET", encoded, tmp, NULL, NULL);
   curl_free(encoded);
   fflush(tmp);
-  fscanf(tmp, "%d\n", &blocks);
-  fclose(tmp);
+
+  char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
+  fseek(tmp, 0L, SEEK_END);
+  int size = ftell(tmp);
+  fseek(tmp, 0L, SEEK_SET);
+
+  fread(buf, sizeof(char), size, tmp);
 
   FILE *f = fopen("/home/osboxes/log.txt", "w");
-  fprintf(f, "%d\n", blocks);
+  fprintf(f, "%s", buf);
   fclose(f);
+
+  fscanf(tmp, "%d\n", &blocks);
+  fclose(tmp);
 
   int result = rebuild_file(path, fp, blocks);
 
