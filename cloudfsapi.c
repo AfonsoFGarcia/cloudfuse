@@ -390,14 +390,10 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
 {
   int blocks = get_file_metadata(add_dot_to_path(path));
 
-  FILE *log = fopen("/home/osboxes/log.txt", "a");
-  fprintf(log, "%d\s", blocks);
-  fclose(log);
-
   int result = rebuild_file(path, fp, blocks);
 
   fflush(fp);
-  if (((blocks == -1) && result) || ftruncate(fileno(fp), 0))
+  if (((blocks != -1) && result) || ftruncate(fileno(fp), 0))
     return 1;
   rewind(fp);
   return 0;
