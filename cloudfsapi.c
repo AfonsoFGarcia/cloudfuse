@@ -313,16 +313,16 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
       return 0;
     }
 
-    unsigned char buf[BLOCK_SIZE+1];
+    unsigned char* buf = (unsigned char*) calloc(1,BLOCK_SIZE+1);
     fread(buf, 1, BLOCK_SIZE, fp);
     fwrite(buf, 1, BLOCK_SIZE, tmp);
+    free(buf);
 
     char *encoded = curl_escape(complete, 0);
     int response = send_request("PUT", encoded, tmp, NULL, NULL);
     result = (response >= 200 && response < 300) && result;
     curl_free(encoded);
     fclose(tmp);
-    free(buf);
   }
 
   free(file);
