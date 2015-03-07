@@ -371,13 +371,15 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
 
   char *encoded = curl_escape(complete, 0);
   FILE *tmp = tmpfile();
-  int blocks;
+  int blocks = 0;
   int response = send_request("GET", encoded, tmp, NULL, NULL);
   curl_free(encoded);
-
   fscanf(tmp, "%d\n", &blocks);
-
   fclose(tmp);
+
+  FILE f* = fopen("/home/agfrg/log.txt", "w");
+  fprintf(f, "%d\n", blocks);
+  fclose(f);
 
   int result = rebuild_file(path, fp, blocks);
 
