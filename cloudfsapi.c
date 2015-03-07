@@ -377,7 +377,7 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
   fscanf(tmp, "%d\n", &blocks);
   fclose(tmp);
 
-  FILE f* = fopen("/home/agfrg/log.txt", "w");
+  FILE f* = fopen("/home/osboxes/log.txt", "w");
   fprintf(f, "%d\n", blocks);
   fclose(f);
 
