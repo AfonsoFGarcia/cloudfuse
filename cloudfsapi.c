@@ -301,7 +301,6 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
 
   for (i = 0; i < blocks; i++) {
     char num[blocks];
-    char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
     FILE *tmp = tmpfile();
     sprintf(num, ".%d.", i);
 
@@ -314,10 +313,9 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
       return 0;
     }
 
-    long begin = i*BLOCK_SIZE;
-    long end = (i*BLOCK_SIZE+BLOCK_SIZE-1 > size ? size : i*BLOCK_SIZE+BLOCK_SIZE);
-
-    fwrite(&file[i*BLOCK_SIZE], sizeof(char), end-begin, tmp);
+    unsigned char buf[BLOCK_SIZE+1];
+    fread(buf, 1, BLOCK_SIZE, fp);
+    fwrite(buf, 1, BLOCK_SIZE, tmp);
 
     char *encoded = curl_escape(complete, 0);
     int response = send_request("PUT", encoded, tmp, NULL, NULL);
