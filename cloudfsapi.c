@@ -283,6 +283,7 @@ int get_file_metadata(char *path) {
 }
 
 int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
+  char* file;
   long size;
   int blocks, i;
   int result = 1;
@@ -293,14 +294,13 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
 
   blocks = ceil((float)size/BLOCK_SIZE);
 
-  char* file = (char*) calloc(BLOCK_SIZE*blocks, sizeof(char));
-
   fprintf(temp, "%d", blocks);
 
   fread(file, sizeof(char), size, fp);
 
   for (i = 0; i < blocks; i++) {
     char num[blocks];
+    char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
     FILE *tmp = tmpfile();
     sprintf(num, ".%d.", i);
 
@@ -313,16 +313,17 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
       return 0;
     }
 
-    char* buf = (char*) calloc(1,BLOCK_SIZE+1);
-    fread(buf, 1, BLOCK_SIZE, fp);
-    fwrite(buf, 1, BLOCK_SIZE, tmp);
-    free(buf);
+    long begin = i*BLOCK_SIZE;
+    long end = (i*BLOCK_SIZE+BLOCK_SIZE-1 > size ? size : i*BLOCK_SIZE+BLOCK_SIZE);
+
+    fwrite(&file[i*BLOCK_SIZE], sizeof(char), end-begin, tmp);
 
     char *encoded = curl_escape(complete, 0);
     int response = send_request("PUT", encoded, tmp, NULL, NULL);
     result = (response >= 200 && response < 300) && result;
     curl_free(encoded);
     fclose(tmp);
+    free(buf);
   }
 
   free(file);
