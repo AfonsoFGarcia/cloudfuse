@@ -288,7 +288,7 @@ int split_file_and_put(char* path, FILE* fp) {
     char num[blocks];
     char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
     FILE *tmp = tmpfile();
-    sprintf(num, ".%d", i);
+    sprintf(num, ".%d.", i);
 
     char * complete ;
     if((complete = malloc(strlen(path)+strlen(num)+1)) != NULL){
