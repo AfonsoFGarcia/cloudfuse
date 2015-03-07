@@ -584,7 +584,7 @@ int delete_objects(const char* path, int blocks) {
     char *encoded = curl_escape(complete, 0);
 
     FILE *f = fopen("/home/osboxes/log.txt", "a");
-    char *encoded = curl_escape(complete, 0);
+    fprintf(f, "%s\n", encoded);
     fclose(f);
 
     int response = send_request("DELETE", encoded, NULL, NULL, NULL);
@@ -607,12 +607,11 @@ int cloudfs_delete_object(const char *path)
   } else {
     return 0;
   }
+  char *encoded = curl_escape(complete, 0);
 
   FILE *f = fopen("/home/osboxes/log.txt", "a");
-  char *encoded = curl_escape(complete, 0);
-  fclose(f);
-
   fprintf(f, "%s\n", encoded);
+  fclose(f);
 
   FILE *tmp = tmpfile();
   int blocks = 0;
@@ -635,7 +634,7 @@ int cloudfs_delete_object(const char *path)
   int result = delete_objects(path, blocks);
 
   f = fopen("/home/osboxes/log.txt", "a");
-  char *encoded = curl_escape(complete, 0);
+  fprintf(f, "%s\n", encoded);
   fclose(f);
 
   response = send_request("DELETE", encoded, NULL, NULL, NULL);
