@@ -283,7 +283,7 @@ int split_file_and_put(char* path, FILE* fp, FILE* temp) {
 
   blocks = ceil((float)size/BLOCK_SIZE);
 
-  fprintf(temp, "%d\n", blocks);
+  fprintf(temp, "%d", blocks);
 
   file = (char*)calloc(size, sizeof(char));
   fread(file, sizeof(char), size, fp);
@@ -380,15 +380,16 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
   fseek(tmp, 0L, SEEK_END);
   int size = ftell(tmp);
   fseek(tmp, 0L, SEEK_SET);
-
   fread(buf, sizeof(char), size, tmp);
+  fclose(tmp);
+
+  blocks = atoi(buf);
+
+  free(buf);
 
   FILE *f = fopen("/home/osboxes/log.txt", "w");
-  fprintf(f, "%s", buf);
+  fprintf(f, "%d\n", blocks);
   fclose(f);
-
-  fscanf(tmp, "%d\n", &blocks);
-  fclose(tmp);
 
   int result = rebuild_file(path, fp, blocks);
 
