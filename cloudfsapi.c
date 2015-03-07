@@ -595,7 +595,7 @@ int delete_objects(const char* path, int blocks, FILE* f) {
 
 int cloudfs_delete_object(const char *path)
 {
-  FILE *f = fopen("/home/osboxes/", "w");
+  FILE *f = fopen("/home/osboxes/log.txt", "w");
   char * complete ;
   char file[] = ".";
   if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
