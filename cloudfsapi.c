@@ -261,15 +261,17 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
     return 0;
   }
 
-  split_file_and_put(path, fp);
+  FILE * tmp = tmpfile();
+
+  split_file_and_put(path, fp, tmp);
 
   char *encoded = curl_escape(complete, 0);
-  int response = send_request("PUT", encoded, fp, NULL, NULL);
+  int response = send_request("PUT", encoded, tmp, NULL, NULL);
   curl_free(encoded);
   return (response >= 200 && response < 300);
 }
 
-int split_file_and_put(char* path, FILE* fp) {
+int split_file_and_put(char* path, FILE* fp, FILE* temp) {
   char* file;
   long size;
   int blocks, i;
@@ -280,6 +282,8 @@ int split_file_and_put(char* path, FILE* fp) {
   fseek(fp, 0L, SEEK_SET);
 
   blocks = ceil((float)size/BLOCK_SIZE);
+
+  fprintf(temp, "%d\n", blocks);
 
   file = (char*)calloc(size, sizeof(char));
   fread(file, sizeof(char), size, fp);
