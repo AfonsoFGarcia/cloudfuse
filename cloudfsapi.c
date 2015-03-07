@@ -617,7 +617,6 @@ int cloudfs_delete_object(const char *path)
   int blocks = 0;
   int response = send_request("GET", encoded, tmp, NULL, NULL);
   if (!(response >= 200 && response < 300)) return 0;
-  curl_free(encoded);
   fflush(tmp);
 
   char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
