@@ -355,6 +355,8 @@ int rebuild_file(char* path, FILE *fp, int blocks) {
     while( (size = fread(buf2, 1, sizeof(buf2), tmp) ) > 0)
       fwrite(buf2, 1, size, fp);
 
+    fprintf(log, "WROTE PIECE %d\n", i);
+
     fclose(tmp);
   }
   fclose(log);
