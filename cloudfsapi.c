@@ -352,10 +352,6 @@ int rebuild_file(char* path, FILE *fp, int blocks) {
     while( (size = fread(buf2, 1, sizeof(buf2), tmp) ) > 0)
       fwrite(buf2, 1, size, fp);
 
-    FILE *log = fopen("/home/osboxes/log.txt", "a");
-    fprintf(log, "WROTE PIECE %d\n", i);
-    fclose(log);
-
     fclose(tmp);
   }
   fflush(fp);
@@ -403,6 +399,10 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
 
 int cloudfs_object_truncate(const char *path, off_t size)
 {
+  FILE *log = fopen("/home/osboxes/log.txt", "a");
+  fprintf(log, "TRUNCATE CALLED");
+  fclose(log);
+
   char *encoded = curl_escape(path, 0);
   int response;
   if (size == 0)
@@ -583,10 +583,6 @@ int delete_objects(const char* path, int blocks) {
 
     char *encoded = curl_escape(complete, 0);
 
-    FILE *f = fopen("/home/osboxes/log.txt", "a");
-    fprintf(f, "%s\n", encoded);
-    fclose(f);
-
     int response = send_request("DELETE", encoded, NULL, NULL, NULL);
     curl_free(encoded);
     result = result && (response >= 200 && response < 300); 
@@ -609,10 +605,6 @@ int cloudfs_delete_object(const char *path)
   }
   char *encoded = curl_escape(complete, 0);
 
-  FILE *f = fopen("/home/osboxes/log.txt", "a");
-  fprintf(f, "%s\n", encoded);
-  fclose(f);
-
   FILE *tmp = tmpfile();
   int blocks = 0;
   int response = send_request("GET", encoded, tmp, NULL, NULL);
@@ -632,10 +624,6 @@ int cloudfs_delete_object(const char *path)
 
   int result = delete_objects(path, blocks);
 
-  f = fopen("/home/osboxes/log.txt", "a");
-  fprintf(f, "%s\n", encoded);
-  fclose(f);
-
   response = send_request("DELETE", encoded, NULL, NULL, NULL);
   curl_free(encoded);
   
@@ -644,6 +632,9 @@ int cloudfs_delete_object(const char *path)
 
 int cloudfs_copy_object(const char *src, const char *dst)
 {
+  FILE *log = fopen("/home/osboxes/log.txt", "a");
+  fprintf(log, "COPY CALLED");
+  fclose(log);
   char *dst_encoded = curl_escape(dst, 0);
   curl_slist *headers = NULL;
   add_header(&headers, "X-Copy-From", src);
