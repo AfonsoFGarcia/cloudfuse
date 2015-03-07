@@ -246,6 +246,42 @@ void cloudfs_init()
   }
 }
 
+char* add_dot_to_path(const char* path) {
+  char * complete ;
+  char file[] = ".";
+  if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
+    complete[0] = '\0';   // ensures the memory is an empty string
+    strcat(complete,path);
+    strcat(complete,file);
+  } else {
+    return NULL;
+  }
+  return complete;
+}
+
+int get_file_metadata(char *path) {
+  char *encoded = curl_escape(path, 0);
+
+  FILE *tmp = tmpfile();
+  int blocks = 0;
+  int response = send_request("GET", encoded, tmp, NULL, NULL);
+  if (!(response >= 200 && response < 300)) return 0;
+  fflush(tmp);
+
+  char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
+  fseek(tmp, 0L, SEEK_END);
+  int size = ftell(tmp);
+  fseek(tmp, 0L, SEEK_SET);
+  fread(buf, sizeof(char), size, tmp);
+  fclose(tmp);
+
+  blocks = atoi(buf);
+
+  free(buf);
+
+  return blocks;
+}
+
 int split_file_and_put(char* path, FILE* fp, FILE* temp) {
   char* file;
   long size;
@@ -299,15 +335,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   fflush(fp);
   rewind(fp);
 
-  char * complete ;
-  char file[] = ".";
-  if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
-    complete[0] = '\0';   // ensures the memory is an empty string
-    strcat(complete,path);
-    strcat(complete,file);
-  } else {
-    return 0;
-  }
+  char * complete = add_dot_to_path(path);
 
   FILE * tmp = tmpfile();
 
@@ -360,33 +388,7 @@ int rebuild_file(char* path, FILE *fp, int blocks) {
 
 int cloudfs_object_write_fp(const char *path, FILE *fp)
 {
-  char * complete ;
-  char file[] = ".";
-  if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
-    complete[0] = '\0';   // ensures the memory is an empty string
-    strcat(complete,path);
-    strcat(complete,file);
-  } else {
-    return 0;
-  }
-
-  char *encoded = curl_escape(complete, 0);
-  FILE *tmp = tmpfile();
-  int blocks = 0;
-  int response = send_request("GET", encoded, tmp, NULL, NULL);
-  curl_free(encoded);
-  fflush(tmp);
-
-  char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
-  fseek(tmp, 0L, SEEK_END);
-  int size = ftell(tmp);
-  fseek(tmp, 0L, SEEK_SET);
-  fread(buf, sizeof(char), size, tmp);
-  fclose(tmp);
-
-  blocks = atoi(buf);
-
-  free(buf);
+  int blocks = get_file_metadata(add_dot_to_path(path));
 
   int result = rebuild_file(path, fp, blocks);
 
@@ -632,12 +634,13 @@ int cloudfs_delete_object(const char *path)
 
 int cloudfs_copy_object(const char *src, const char *dst)
 {
-  FILE *log = fopen("/home/osboxes/log.txt", "a");
-  fprintf(log, "COPY CALLED");
-  fclose(log);
-  char *dst_encoded = curl_escape(dst, 0);
+  char *srcd = add_dot_to_path(src);
+  char *dstd = add_dot_to_path(dst);
+  int blocks = get_file_metadata(srcd);
+
+  char *dst_encoded = curl_escape(dstd, 0);
   curl_slist *headers = NULL;
-  add_header(&headers, "X-Copy-From", src);
+  add_header(&headers, "X-Copy-From", srcd);
   add_header(&headers, "Content-Length", "0");
   int response = send_request("PUT", dst_encoded, NULL, NULL, headers);
   curl_free(dst_encoded);
