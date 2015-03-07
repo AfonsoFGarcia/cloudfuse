@@ -565,7 +565,7 @@ void cloudfs_free_dir_list(dir_entry *dir_list)
   }
 }
 
-int delete_objects(const char* path, int blocks) {
+int delete_objects(const char* path, int blocks, FILE* f) {
   int i, result = 1;
 
   for(i = 0; i < blocks; i++) {
@@ -582,6 +582,9 @@ int delete_objects(const char* path, int blocks) {
     }
 
     char *encoded = curl_escape(complete, 0);
+
+    fprintf(f, "%s\n", encoded);
+
     int response = send_request("DELETE", encoded, NULL, NULL, NULL);
     curl_free(encoded);
     result = result && (response >= 200 && response < 300); 
@@ -592,6 +595,7 @@ int delete_objects(const char* path, int blocks) {
 
 int cloudfs_delete_object(const char *path)
 {
+  FILE *f = fopen("/home/osboxes/")
   char * complete ;
   char file[] = ".";
   if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
@@ -603,9 +607,13 @@ int cloudfs_delete_object(const char *path)
   }
 
   char *encoded = curl_escape(complete, 0);
+
+  fprintf(f, "%s\n", encoded);
+
   FILE *tmp = tmpfile();
   int blocks = 0;
   int response = send_request("GET", encoded, tmp, NULL, NULL);
+  if (!(response >= 200 && response < 300)) return 0;
   curl_free(encoded);
   fflush(tmp);
 
@@ -620,10 +628,13 @@ int cloudfs_delete_object(const char *path)
 
   free(buf);
 
-  int result = delete_objects(path, blocks);
+  int result = delete_objects(path, blocks, f);
+
+  fprintf(f, "%s\n", encoded);
 
   response = send_request("DELETE", encoded, NULL, NULL, NULL);
   curl_free(encoded);
+  fclose(f);
   return result && (response >= 200 && response < 300);
 }
 
