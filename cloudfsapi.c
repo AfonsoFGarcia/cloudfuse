@@ -281,8 +281,6 @@ int split_file_and_put(char* path, FILE* fp, FILE* temp) {
     long end = (i*BLOCK_SIZE+BLOCK_SIZE-1 > size ? size : i*BLOCK_SIZE+BLOCK_SIZE);
 
     fwrite(&file[i*BLOCK_SIZE], sizeof(char), end-begin, tmp);
-    //memcpy(buf, &file[i*BLOCK_SIZE], end-begin);
-    //fprintf(tmp, "%s", buf);
 
     char *encoded = curl_escape(complete, 0);
     int response = send_request("PUT", encoded, tmp, NULL, NULL);
@@ -567,12 +565,66 @@ void cloudfs_free_dir_list(dir_entry *dir_list)
   }
 }
 
+int delete_objects(const char* path, int blocks) {
+  int i, result = 1;
+
+  for(i = 0; i < blocks; i++) {
+    char num[blocks];
+    sprintf(num, ".%d.", i);
+
+    char * complete ;
+    if((complete = malloc(strlen(path)+strlen(num)+1)) != NULL){
+      complete[0] = '\0';   // ensures the memory is an empty string
+      strcat(complete,path);
+      strcat(complete,num);
+    } else {
+      return 0;
+    }
+
+    char *encoded = curl_escape(complete, 0);
+    int response = send_request("DELETE", encoded, NULL, NULL, NULL);
+    curl_free(encoded);
+    result = result && (response >= 200 && response < 300); 
+  }
+
+  return result;
+}
+
 int cloudfs_delete_object(const char *path)
 {
-  char *encoded = curl_escape(path, 0);
-  int response = send_request("DELETE", encoded, NULL, NULL, NULL);
+  char * complete ;
+  char file[] = ".";
+  if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
+    complete[0] = '\0';   // ensures the memory is an empty string
+    strcat(complete,path);
+    strcat(complete,file);
+  } else {
+    return 0;
+  }
+
+  char *encoded = curl_escape(complete, 0);
+  FILE *tmp = tmpfile();
+  int blocks = 0;
+  int response = send_request("GET", encoded, tmp, NULL, NULL);
   curl_free(encoded);
-  return (response >= 200 && response < 300);
+  fflush(tmp);
+
+  char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
+  fseek(tmp, 0L, SEEK_END);
+  int size = ftell(tmp);
+  fseek(tmp, 0L, SEEK_SET);
+  fread(buf, sizeof(char), size, tmp);
+  fclose(tmp);
+
+  blocks = atoi(buf);
+
+  free(buf);
+
+  int result = delete_objects(path, blocks);
+
+  response = send_request("DELETE", encoded, NULL, NULL, NULL);
+  curl_free(encoded);
+  return result && (response >= 200 && response < 300);
 }
 
 int cloudfs_copy_object(const char *src, const char *dst)
