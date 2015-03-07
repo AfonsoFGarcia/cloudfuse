@@ -312,11 +312,48 @@ int split_file_and_put(char* path, FILE* fp, FILE* temp) {
     char *encoded = curl_escape(complete, 0);
     int response = send_request("PUT", encoded, tmp, NULL, NULL);
     result = (response >= 200 && response < 300) && result;
+    curl_free(encoded);
     fclose(tmp);
     free(buf);
   }
 
   free(file);
+  return result;
+}
+
+int rebuild_file(char* path, FILE *fp, int blocks) {
+  int i;
+  int result = 1;
+  for (i = 0; i < blocks; i++) {
+    char num[blocks];
+    char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
+    FILE *tmp = tmpfile();
+    sprintf(num, ".%d.", i);
+
+    char * complete ;
+    if((complete = malloc(strlen(path)+strlen(num)+1)) != NULL){
+      complete[0] = '\0';   // ensures the memory is an empty string
+      strcat(complete,path);
+      strcat(complete,num);
+    } else {
+      return 0;
+    }
+
+    char *encoded = curl_escape(complete, 0);
+    int response = send_request("GET", complete, tmp, NULL, NULL);
+    result = result && (response >= 200 && response < 300);
+    curl_free(encoded);
+    fflush(tmp);
+
+    fseek(tmp, 0L, SEEK_END);
+    int size = ftell(tmp);
+    fseek(tmp, 0L, SEEK_SET);
+
+    fread(buf, sizeof(char), size, tmp);
+    fclose(tmp);
+
+    fprintf(fp, "%s", buf);
+  }
   return result;
 }
 
@@ -333,11 +370,19 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
   }
 
   char *encoded = curl_escape(complete, 0);
-
-  int response = send_request("GET", encoded, fp, NULL, NULL);
+  FILE *tmp = tmpfile();
+  int blocks;
+  int response = send_request("GET", encoded, tmp, NULL, NULL);
   curl_free(encoded);
+
+  fscanf(tmp, "%d\n", &blocks);
+
+  fclose(tmp);
+
+  int result = rebuild_file(path, fp, blocks);
+
   fflush(fp);
-  if ((response >= 200 && response < 300) || ftruncate(fileno(fp), 0))
+  if (((response >= 200 && response < 300) && result) || ftruncate(fileno(fp), 0))
     return 1;
   rewind(fp);
   return 0;
