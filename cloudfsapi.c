@@ -313,7 +313,7 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
       return 0;
     }
 
-    unsigned char* buf = (unsigned char*) calloc(1,BLOCK_SIZE+1);
+    char* buf = (char*) calloc(1,BLOCK_SIZE+1);
     fread(buf, 1, BLOCK_SIZE, fp);
     fwrite(buf, 1, BLOCK_SIZE, tmp);
     free(buf);
