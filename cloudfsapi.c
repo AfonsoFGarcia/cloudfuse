@@ -390,6 +390,10 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
 {
   int blocks = get_file_metadata(add_dot_to_path(path));
 
+  FILE *log = fopen("/home/osboxes/log.txt", "a");
+  fprintf(log, "%d\s", blocks);
+  fclose(log);
+
   int result = rebuild_file(path, fp, blocks);
 
   fflush(fp);
@@ -641,7 +645,7 @@ int copy_objects(const char* src, const char* dst, int blocks) {
 
     char * srcd;
     char * dstd;
-    
+
     if((srcd = malloc(strlen(src)+strlen(num)+1)) != NULL){
       srcd[0] = '\0';   // ensures the memory is an empty string
       strcat(srcd,src);
