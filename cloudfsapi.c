@@ -595,10 +595,6 @@ int delete_objects(const char* path, int blocks) {
 
 int cloudfs_delete_object(const char *path)
 {
-  FILE *log = fopen("/home/osboxes/log.txt", "w");
-  fprintf(log, "COPY CALL HOME");
-  fclose(log);
-
   char * complete ;
   char file[] = ".";
   if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
@@ -675,6 +671,10 @@ int copy_objects(const char* src, const char* dst, int blocks) {
 
 int cloudfs_copy_object(const char *src, const char *dst)
 {
+  FILE *log = fopen("/home/osboxes/log.txt", "w");
+  fprintf(log, "COPY CALL HOME");
+  fclose(log);
+
   char *srcd = add_dot_to_path(src);
   char *dstd = add_dot_to_path(dst);
   int blocks = get_file_metadata(srcd);
