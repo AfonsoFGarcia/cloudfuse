@@ -639,7 +639,9 @@ int copy_objects(const char* src, const char* dst, int blocks) {
     char num[blocks];
     sprintf(num, ".%d.", i);
 
-    char * srcd, dstd;
+    char * srcd;
+    char * dstd;
+    
     if((srcd = malloc(strlen(src)+strlen(num)+1)) != NULL){
       srcd[0] = '\0';   // ensures the memory is an empty string
       strcat(srcd,src);
