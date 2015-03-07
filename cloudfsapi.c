@@ -283,7 +283,6 @@ int get_file_metadata(char *path) {
 }
 
 int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
-  char* file;
   long size;
   int blocks, i;
   int result = 1;
@@ -293,6 +292,8 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   fseek(fp, 0L, SEEK_SET);
 
   blocks = ceil((float)size/BLOCK_SIZE);
+
+  char* file = (char*) calloc(BLOCK_SIZE*blocks, sizeof(char));
 
   fprintf(temp, "%d", blocks);
 
