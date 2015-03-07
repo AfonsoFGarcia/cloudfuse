@@ -246,31 +246,6 @@ void cloudfs_init()
   }
 }
 
-int cloudfs_object_read_fp(const char *path, FILE *fp)
-{
-  fflush(fp);
-  rewind(fp);
-
-  char * complete ;
-  char file[] = ".";
-  if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
-    complete[0] = '\0';   // ensures the memory is an empty string
-    strcat(complete,path);
-    strcat(complete,file);
-  } else {
-    return 0;
-  }
-
-  FILE * tmp = tmpfile();
-
-  split_file_and_put(path, fp, tmp);
-
-  char *encoded = curl_escape(complete, 0);
-  int response = send_request("PUT", encoded, tmp, NULL, NULL);
-  curl_free(encoded);
-  return (response >= 200 && response < 300);
-}
-
 int split_file_and_put(char* path, FILE* fp, FILE* temp) {
   char* file;
   long size;
@@ -304,10 +279,11 @@ int split_file_and_put(char* path, FILE* fp, FILE* temp) {
     }
 
     long begin = i*BLOCK_SIZE;
-    long end = (i*BLOCK_SIZE+BLOCK_SIZE-1 > size ? size : i*BLOCK_SIZE+BLOCK_SIZE-1);
+    long end = (i*BLOCK_SIZE+BLOCK_SIZE-1 > size ? size : i*BLOCK_SIZE+BLOCK_SIZE);
 
-    memcpy(buf, &file[i*BLOCK_SIZE], end-begin);
-    fprintf(tmp, "%s", buf);
+    fwrite(&file[i*BLOCK_SIZE], sizeof(char), end-begin, tmp);
+    //memcpy(buf, &file[i*BLOCK_SIZE], end-begin);
+    //fprintf(tmp, "%s", buf);
 
     char *encoded = curl_escape(complete, 0);
     int response = send_request("PUT", encoded, tmp, NULL, NULL);
@@ -319,6 +295,31 @@ int split_file_and_put(char* path, FILE* fp, FILE* temp) {
 
   free(file);
   return result;
+}
+
+int cloudfs_object_read_fp(const char *path, FILE *fp)
+{
+  fflush(fp);
+  rewind(fp);
+
+  char * complete ;
+  char file[] = ".";
+  if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
+    complete[0] = '\0';   // ensures the memory is an empty string
+    strcat(complete,path);
+    strcat(complete,file);
+  } else {
+    return 0;
+  }
+
+  FILE * tmp = tmpfile();
+
+  split_file_and_put(path, fp, tmp);
+
+  char *encoded = curl_escape(complete, 0);
+  int response = send_request("PUT", encoded, tmp, NULL, NULL);
+  curl_free(encoded);
+  return (response >= 200 && response < 300);
 }
 
 int rebuild_file(char* path, FILE *fp, int blocks) {
