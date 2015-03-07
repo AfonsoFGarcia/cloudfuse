@@ -347,15 +347,15 @@ int rebuild_file(char* path, FILE *fp, int blocks) {
     curl_free(encoded);
     fflush(tmp);
 
-    fseek(tmp, 0L, SEEK_END);
-    int size = ftell(tmp);
     fseek(tmp, 0L, SEEK_SET);
+    fseek(fp, 0L, SEEK_SET);
 
-    fprintf(log, "%d\n", size);
+    unsigned char buf2[255];
+    size_t size;
+    while( (size = fread(buf2, 1, sizeof(buf2), tmp) ) > 0)
+      fwrite(buf2, 1, size, fp);
 
-    fread(buf, sizeof(char), size, tmp);
     fclose(tmp);
-    fwrite(buf, sizeof(char), size, fp);
   }
   fclose(log);
   return result;
