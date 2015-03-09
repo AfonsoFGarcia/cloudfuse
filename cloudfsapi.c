@@ -221,6 +221,36 @@ char* add_dt_store(const char* path) {
   return path_mod;
 }
 
+int write_splits(char* store_path) {
+  int result = 1;
+  t_fifo_elem *elem = pop_fifo();
+
+  while (elem != NULL) {
+    char num[blocks];
+    FILE *tmp = elem->data;
+    i = elem->index;
+    sprintf(num, ".%d.", i);
+
+    char * complete ;
+    if((complete = malloc(strlen(store_path)+strlen(num)+1)) != NULL){
+      complete[0] = '\0';   // ensures the memory is an empty string
+      strcat(complete,store_path);
+      strcat(complete,num);
+    } else {
+      return 0;
+    }
+
+    char *encoded = curl_escape(complete, 0);
+    int response = send_request("PUT", encoded, tmp, NULL, NULL);
+    result = (response >= 200 && response < 300) && result;
+    curl_free(encoded);
+    fclose(tmp);
+    elem = pop_fifo();
+  }
+
+  return result;
+}
+
 int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   long size;
   int blocks, i;
