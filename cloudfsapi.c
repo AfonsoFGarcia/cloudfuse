@@ -285,7 +285,7 @@ void* create_splits(void* in) {
 
     deflate(tmp, store);
 
-    push_fifo(i, tmp);
+    push_fifo(i, store);
     free(buf);
   }
 
