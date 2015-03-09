@@ -24,7 +24,7 @@
 #define RHEL5_CERTIFICATE_FILE "/etc/pki/tls/certs/ca-bundle.crt"
 
 #define REQUEST_RETRIES 4
-#define BLOCK_SIZE 16384
+#define BLOCK_SIZE 100000
 
 static char storage_url[MAX_URL_SIZE];
 static char storage_token[MAX_HEADER_SIZE];
