@@ -325,7 +325,7 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
 
   int res = (int) *result;
 
-  FILE *log = fopen("/home/osboxes/log.txt", "a");
+  log = fopen("/home/osboxes/log.txt", "a");
   fprintf(log, "RETURNING\n");
   fclose(log);
 
