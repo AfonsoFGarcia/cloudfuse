@@ -255,7 +255,7 @@ void* write_splits(void* in) {
   }
 
   FILE *log = fopen("/home/osboxes/log.txt", "a");
-  fprintf(log, "RESULT: %d\n", *result);
+  fprintf(log, "RESULT: %d\n", result);
   fclose(log);
 
   return result;
@@ -319,8 +319,11 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   pthread_join(create_thread, NULL);
   pthread_join(write_thread, write_result);
 
-  int *result = (int *) write_result;
-  int res = *result;
+  FILE *log = fopen("/home/osboxes/log.txt", "a");
+  fprintf(log, "RESULT: %d\n", write_result);
+  fclose(log);
+
+  int res = (int) *result;
 
   FILE *log = fopen("/home/osboxes/log.txt", "a");
   fprintf(log, "RETURNING\n");
