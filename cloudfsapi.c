@@ -268,7 +268,7 @@ void* create_splits(void* in) {
   char *file = data->data;
   int blocks = data->blocks;
   long size = data->size;
-  FILE *tmp = data->file;
+  FILE *meta = data->file;
 
   int i;
 
