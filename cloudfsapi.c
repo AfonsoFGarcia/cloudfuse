@@ -283,6 +283,7 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   long size;
   int blocks;
   char *store_path = add_dt_store(path);
+  pthread_t create_thread, write_thread;
 
   fseek(fp, 0L, SEEK_END);
   size = ftell(fp);
@@ -305,7 +306,9 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   pass_write->data = store_path;
   pass_write->blocks = blocks;
 
-  create_splits(pass_splits);
+  pthread_create(&create_thread, NULL, create_splits, pass_splits);
+  pthread_join(create_thread, NULL);
+  //create_splits(pass_splits);
 
   return write_splits(pass_write);
 }
