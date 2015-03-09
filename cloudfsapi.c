@@ -239,7 +239,6 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   fread(file, sizeof(char), size, fp);
 
   for (i = 0; i < blocks; i++) {
-    char num[blocks];
     char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
     FILE *tmp = tmpfile();
 
@@ -256,6 +255,7 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   t_fifo_elem *elem = pop_fifo();
 
   while (elem != NULL) {
+    char num[blocks];
     FILE *tmp = elem->data;
     i = elem->index;
     sprintf(num, ".%d.", i);
