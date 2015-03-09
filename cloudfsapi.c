@@ -230,27 +230,30 @@ void* write_splits(void* in) {
   int i = 0;
   t_fifo_elem *elem = pop_fifo();
 
-  while (elem != NULL) {
-    char num[blocks];
-    FILE *tmp = elem->data;
-    i = elem->index;
-    sprintf(num, ".%d.", i);
+  while (i < blocks) {
+    if(elem != NULL) {
+      char num[blocks];
+      FILE *tmp = elem->data;
+      i = elem->index;
+      sprintf(num, ".%d.", i);
 
-    char * complete ;
-    if((complete = malloc(strlen(store_path)+strlen(num)+1)) != NULL){
-      complete[0] = '\0';   // ensures the memory is an empty string
-      strcat(complete,store_path);
-      strcat(complete,num);
-    } else {
-      pthread_exit((void*) 0);
-      return 0;
+      char * complete ;
+      if((complete = malloc(strlen(store_path)+strlen(num)+1)) != NULL){
+        complete[0] = '\0';   // ensures the memory is an empty string
+        strcat(complete,store_path);
+        strcat(complete,num);
+      } else {
+        pthread_exit((void*) 0);
+        return 0;
+      }
+
+      char *encoded = curl_escape(complete, 0);
+      int response = send_request("PUT", encoded, tmp, NULL, NULL);
+      result = (response >= 200 && response < 300) && result;
+      curl_free(encoded);
+      fclose(tmp);
+      i++;
     }
-
-    char *encoded = curl_escape(complete, 0);
-    int response = send_request("PUT", encoded, tmp, NULL, NULL);
-    result = (response >= 200 && response < 300) && result;
-    curl_free(encoded);
-    fclose(tmp);
     elem = pop_fifo();
   }
 
