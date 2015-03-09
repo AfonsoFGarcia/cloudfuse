@@ -25,6 +25,7 @@ typedef struct dir_entry
 
 typedef struct thread_pass {
 	char *data;
+  FILE *file;
 	int blocks;
 	long size;
 } t_thread_pass;

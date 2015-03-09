@@ -19,6 +19,7 @@
 #include "cloudfsapi.h"
 #include "config.h"
 #include "fifo_ts.h"
+#include "compressapi.h"
 
 #define RHEL5_LIBCURL_VERSION 462597
 #define RHEL5_CERTIFICATE_FILE "/etc/pki/tls/certs/ca-bundle.crt"
@@ -267,12 +268,14 @@ void* create_splits(void* in) {
   char *file = data->data;
   int blocks = data->blocks;
   long size = data->size;
+  FILE *tmp = data->file;
 
   int i;
 
   for (i = 0; i < blocks; i++) {
     char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
     FILE *tmp = tmpfile();
+    FILE *store;
 
     long begin = i*BLOCK_SIZE;
     long end = (i*BLOCK_SIZE+BLOCK_SIZE-1 > size ? size : i*BLOCK_SIZE+BLOCK_SIZE);
@@ -280,7 +283,9 @@ void* create_splits(void* in) {
     fwrite(&file[i*BLOCK_SIZE], sizeof(char), end-begin, tmp);
     fflush(tmp);
 
-    push_fifo(i, tmp);
+    deflate(tmp, store);
+
+    push_fifo(i, store);
     free(buf);
   }
 
@@ -310,6 +315,7 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   pass_splits->data = file;
   pass_splits->blocks = blocks;
   pass_splits->size = size;
+  pass_splits->file = temp;
 
   pass_write->data = store_path;
   pass_write->blocks = blocks;
@@ -336,6 +342,7 @@ int rebuild_file(const char* path, FILE *fp, int blocks) {
     char num[blocks];
     char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
     FILE *tmp = tmpfile();
+    FILE *store;
     sprintf(num, ".%d.", i);
 
     char * complete ;
@@ -353,14 +360,16 @@ int rebuild_file(const char* path, FILE *fp, int blocks) {
     curl_free(encoded);
     fflush(tmp);
 
-    fseek(tmp, 0L, SEEK_SET);
+    inflate(tmp, store, 0);
+
+    fseek(store, 0L, SEEK_SET);
 
     unsigned char buf2[255];
     size_t size;
-    while( (size = fread(buf2, 1, sizeof(buf2), tmp) ) > 0)
+    while( (size = fread(buf2, 1, sizeof(buf2), store) ) > 0)
       fwrite(buf2, 1, size, fp);
 
-    fclose(tmp);
+    fclose(store);
   }
   fflush(fp);
   return result;
