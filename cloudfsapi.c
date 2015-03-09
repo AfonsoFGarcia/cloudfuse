@@ -227,7 +227,7 @@ void* write_splits(void* in) {
   char* store_path = data->data;
   int blocks = data->blocks;
 
-  int result = 1;
+  intptr_t result = 1;
   int i = 0;
   t_fifo_elem *elem = pop_fifo();
 
@@ -307,7 +307,8 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
 
   fprintf(temp, "%d", blocks);
 
-  fread(file, sizeof(char), size, fp);
+  if(fread(file, sizeof(char), size, fp) != size)
+    return 0;
 
   t_thread_pass *pass_splits = (t_thread_pass *) malloc(sizeof(t_thread_pass));
   t_thread_pass *pass_write = (t_thread_pass *) malloc(sizeof(t_thread_pass));
@@ -488,7 +489,8 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
   fseek(tmp, 0L, SEEK_END);
   int size = ftell(tmp);
   fseek(tmp, 0L, SEEK_SET);
-  fread(buf, sizeof(char), size, tmp);
+  if(fread(buf, sizeof(char), size, tmp) != size)
+    return 0;
   fclose(tmp);
 
   blocks = atoi(buf);
@@ -692,7 +694,8 @@ int cloudfs_delete_object(const char *path)
   fseek(tmp, 0L, SEEK_END);
   int size = ftell(tmp);
   fseek(tmp, 0L, SEEK_SET);
-  fread(buf, sizeof(char), size, tmp);
+  if(fread(buf, sizeof(char), size, tmp) != size)
+    return 0;
   fclose(tmp);
 
   blocks = atoi(buf);
