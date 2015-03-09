@@ -42,3 +42,15 @@ void push_fifo(int index, FILE* data) {
   }
   pthread_mutex_unlock(&lock);
 }
+
+int fifo_size() {
+  int ret = 0;
+  pthread_mutex_lock(&lock);
+  t_fifo_elem * elem = fifo;
+  while(elem != NULL) {
+    ret++;
+    elem = elem->next;
+  }
+  pthread_mutex_unlock(&lock);
+  return ret;
+}
