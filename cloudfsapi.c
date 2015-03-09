@@ -317,26 +317,26 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
 
   pthread_create(&write_thread, NULL, write_splits, pass_write);
 
-  FILE *log = fopen("/home/osboxes/log.txt", "a");
+  log = fopen("/home/osboxes/log.txt", "a");
   fprintf(log, "CREATE T2");
   fclose(log);
 
   pthread_join(create_thread, NULL);
 
-  FILE *log = fopen("/home/osboxes/log.txt", "a");
+  log = fopen("/home/osboxes/log.txt", "a");
   fprintf(log, "JOINED T1");
   fclose(log);
 
   pthread_join(write_thread, write_result);
 
-  FILE *log = fopen("/home/osboxes/log.txt", "a");
+  log = fopen("/home/osboxes/log.txt", "a");
   fprintf(log, "JOINED T2");
   fclose(log);
 
   int *result = (int *) write_result;
   int res = *result;
 
-  FILE *log = fopen("/home/osboxes/log.txt", "a");
+  log = fopen("/home/osboxes/log.txt", "a");
   fprintf(log, "RETURNING");
   fclose(log);
 
