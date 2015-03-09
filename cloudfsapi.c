@@ -221,12 +221,13 @@ char* add_dt_store(const char* path) {
   return path_mod;
 }
 
-int write_splits(void* in) {
+void* write_splits(void* in) {
   t_thread_pass *data = (t_thread_pass *) in;
   char* store_path = data->data;
   int blocks = data->blocks;
 
-  int result = 1;
+  int* result = (int*) malloc(sizeof(int));
+  *result = 1;
   int i = 0;
   t_fifo_elem *elem = pop_fifo();
 
@@ -247,7 +248,7 @@ int write_splits(void* in) {
 
     char *encoded = curl_escape(complete, 0);
     int response = send_request("PUT", encoded, tmp, NULL, NULL);
-    result = (response >= 200 && response < 300) && result;
+    *result = (response >= 200 && response < 300) && *result;
     curl_free(encoded);
     fclose(tmp);
     elem = pop_fifo();
@@ -308,9 +309,11 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
 
   pthread_create(&create_thread, NULL, create_splits, pass_splits);
   pthread_join(create_thread, NULL);
-  //create_splits(pass_splits);
 
-  return write_splits(pass_write);
+  int *result = (int *) write_splits(pass_write)
+  int res = *result;
+
+  return res;
 }
 
 int rebuild_file(const char* path, FILE *fp, int blocks) {
