@@ -221,8 +221,9 @@ char* add_dt_store(const char* path) {
   return path_mod;
 }
 
-int write_splits(char* store_path) {
+int write_splits(char* store_path, int blocks) {
   int result = 1;
+  int i = 0;
   t_fifo_elem *elem = pop_fifo();
 
   while (elem != NULL) {
@@ -254,7 +255,6 @@ int write_splits(char* store_path) {
 int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   long size;
   int blocks, i;
-  int result = 1;
   char *store_path = add_dt_store(path);
 
   fseek(fp, 0L, SEEK_END);
@@ -282,33 +282,7 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
     free(buf);
   }
 
-  t_fifo_elem *elem = pop_fifo();
-
-  while (elem != NULL) {
-    char num[blocks];
-    FILE *tmp = elem->data;
-    i = elem->index;
-    sprintf(num, ".%d.", i);
-
-    char * complete ;
-    if((complete = malloc(strlen(store_path)+strlen(num)+1)) != NULL){
-      complete[0] = '\0';   // ensures the memory is an empty string
-      strcat(complete,store_path);
-      strcat(complete,num);
-    } else {
-      return 0;
-    }
-
-    char *encoded = curl_escape(complete, 0);
-    int response = send_request("PUT", encoded, tmp, NULL, NULL);
-    result = (response >= 200 && response < 300) && result;
-    curl_free(encoded);
-    fclose(tmp);
-    elem = pop_fifo();
-  }
-
-  free(file);
-  return result;
+  return write_splits(store_path, blocks);
 }
 
 int rebuild_file(const char* path, FILE *fp, int blocks) {
