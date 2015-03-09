@@ -242,6 +242,16 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
     char num[blocks];
     char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
     FILE *tmp = tmpfile();
+
+    long begin = i*BLOCK_SIZE;
+    long end = (i*BLOCK_SIZE+BLOCK_SIZE-1 > size ? size : i*BLOCK_SIZE+BLOCK_SIZE);
+
+    fwrite(&file[i*BLOCK_SIZE], sizeof(char), end-begin, tmp);
+    fflush(tmp);
+
+    push_fifo(i, tmp);
+    t_fifo_elem = pop_fifo();
+
     sprintf(num, ".%d.", i);
 
     char * complete ;
@@ -252,12 +262,6 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
     } else {
       return 0;
     }
-
-    long begin = i*BLOCK_SIZE;
-    long end = (i*BLOCK_SIZE+BLOCK_SIZE-1 > size ? size : i*BLOCK_SIZE+BLOCK_SIZE);
-
-    fwrite(&file[i*BLOCK_SIZE], sizeof(char), end-begin, tmp);
-    fflush(tmp);
 
     char *encoded = curl_escape(complete, 0);
     int response = send_request("PUT", encoded, tmp, NULL, NULL);
@@ -801,6 +805,10 @@ int cloudfs_connect()
   char postdata[8192] = "";
   xmlNode *top_node = NULL, *service_node = NULL, *endpoint_node = NULL;
   xmlParserCtxtPtr xmlctx = NULL;
+
+  if(!init_fifo()) {
+    return 0;
+  }
 
   pthread_mutex_lock(&pool_mut);
 

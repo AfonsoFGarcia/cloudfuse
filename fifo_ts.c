@@ -8,10 +8,6 @@ int init_fifo() {
   return (pthread_mutex_init(&lock, NULL) == 0);
 }
 
-void destroy_fifo() {
-  pthread_mutex_destroy(&lock);
-}
-
 t_fifo_elem * pop_fifo() {
   t_fifo_elem *ret;
   pthread_mutex_lock(&lock);
