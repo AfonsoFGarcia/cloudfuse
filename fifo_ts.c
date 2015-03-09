@@ -30,7 +30,7 @@ t_fifo_elem * pop_fifo() {
   return ret;
 }
 
-void push_fifo(int index, char* data) {
+void push_fifo(int index, FILE* data) {
   t_fifo_elem *elem = (t_fifo_elem*) malloc(sizeof(t_fifo_elem));
   elem->index = index;
   elem->data = data;

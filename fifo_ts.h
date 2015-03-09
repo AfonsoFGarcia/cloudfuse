@@ -4,11 +4,11 @@
 
 typedef struct fifo_elem {
 	int index;
-	char* data;
+	FILE* data;
 	struct fifo_elem* next;
 } t_fifo_elem;
 
 int init_fifo();
 void destroy_fifo();
 t_fifo_elem * pop_fifo();
-void push_fifo(int index, char* data);
+void push_fifo(int index, FILE* data);
