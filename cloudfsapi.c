@@ -283,9 +283,13 @@ void* create_splits(void* in) {
     fwrite(&file[i*BLOCK_SIZE], sizeof(char), end-begin, tmp);
     fflush(tmp);
 
-    deflate(tmp, store);
+    if(!deflate(tmp, store)) {
+      push_fifo(i, tmp);
+    } else {
+      free(tmp)
+      push_fifo(i, store);
+    }
 
-    push_fifo(i, store);
     free(buf);
   }
 
@@ -332,6 +336,17 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   return result;
 }
 
+void write_to_file(FILE* fp, FILE* store) {
+  fseek(store, 0L, SEEK_SET);
+
+  unsigned char buf2[255];
+  size_t size;
+  while( (size = fread(buf2, 1, sizeof(buf2), store) ) > 0)
+    fwrite(buf2, 1, size, fp);
+
+  fclose(store);
+}
+
 int rebuild_file(const char* path, FILE *fp, int blocks) {
   int i;
   int result = 1;
@@ -361,16 +376,15 @@ int rebuild_file(const char* path, FILE *fp, int blocks) {
     curl_free(encoded);
     fflush(tmp);
 
-    inflate(tmp, store, 0);
+    if(!inflate(tmp, store, 0)) {
+      write_to_file(fp, tmp);
+      fclose(tmp);
+    } else {
+      fclose(tmp);
+      write_to_file(fp, store);
+      fclose(store);
+    }
 
-    fseek(store, 0L, SEEK_SET);
-
-    unsigned char buf2[255];
-    size_t size;
-    while( (size = fread(buf2, 1, sizeof(buf2), store) ) > 0)
-      fwrite(buf2, 1, size, fp);
-
-    fclose(store);
   }
   fflush(fp);
   return result;
