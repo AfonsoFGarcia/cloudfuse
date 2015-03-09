@@ -784,7 +784,8 @@ int cloudfs_copy_object(const char *src, const char *dst)
   fseek(tmp, 0L, SEEK_END);
   int size = ftell(tmp);
   fseek(tmp, 0L, SEEK_SET);
-  fread(buf, sizeof(char), size, tmp);
+  if(fread(buf, sizeof(char), size, tmp) != size)
+    return 0;
   fclose(tmp);
 
   blocks = atoi(buf);
