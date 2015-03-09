@@ -250,7 +250,7 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
     fflush(tmp);
 
     push_fifo(i, tmp);
-    t_fifo_elem = pop_fifo();
+    t_fifo_elem *elem = pop_fifo();
 
     sprintf(num, ".%d.", i);
 
