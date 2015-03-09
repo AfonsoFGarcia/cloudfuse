@@ -310,13 +310,35 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   void * write_result;
 
   pthread_create(&create_thread, NULL, create_splits, pass_splits);
+
+  FILE *log = fopen("/home/osboxes/log.txt", "a");
+  fprintf(log, "CREATE T1");
+  fclose(log);
+
   pthread_create(&write_thread, NULL, write_splits, pass_write);
 
+  FILE *log = fopen("/home/osboxes/log.txt", "a");
+  fprintf(log, "CREATE T2");
+  fclose(log);
+
   pthread_join(create_thread, NULL);
+
+  FILE *log = fopen("/home/osboxes/log.txt", "a");
+  fprintf(log, "JOINED T1");
+  fclose(log);
+
   pthread_join(write_thread, write_result);
+
+  FILE *log = fopen("/home/osboxes/log.txt", "a");
+  fprintf(log, "JOINED T2");
+  fclose(log);
 
   int *result = (int *) write_result;
   int res = *result;
+
+  FILE *log = fopen("/home/osboxes/log.txt", "a");
+  fprintf(log, "RETURNING");
+  fclose(log);
 
   return res;
 }
@@ -493,10 +515,6 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
 
 int cloudfs_object_truncate(const char *path, off_t size)
 {
-  FILE *log = fopen("/home/osboxes/log.txt", "a");
-  fprintf(log, "TRUNCATE CALLED");
-  fclose(log);
-
   char *encoded = curl_escape(path, 0);
   int response;
   if (size == 0)
