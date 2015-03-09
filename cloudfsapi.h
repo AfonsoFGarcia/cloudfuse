@@ -23,6 +23,12 @@ typedef struct dir_entry
   struct dir_entry *next;
 } dir_entry;
 
+typedef struct thread_pass {
+	char *data;
+	int blocks;
+	long size;
+} t_thread_pass;
+
 void cloudfs_init();
 void cloudfs_set_credentials(char *username, char *tenant, char *password,
                              char *authurl, char *region, int use_snet);

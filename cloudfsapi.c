@@ -221,7 +221,11 @@ char* add_dt_store(const char* path) {
   return path_mod;
 }
 
-int write_splits(char* store_path, int blocks) {
+int write_splits(void* in) {
+  t_thread_pass *data = (t_thread_pass *) in;
+  char* store_path = data->data;
+  int blocks = data->blocks;
+
   int result = 1;
   int i = 0;
   t_fifo_elem *elem = pop_fifo();
@@ -252,8 +256,14 @@ int write_splits(char* store_path, int blocks) {
   return result;
 }
 
-void create_splits(char* file, int blocks, long size) {
+void create_splits(void* in) {
+  t_thread_pass *data = (t_thread_pass *) in;
+  char *file = data->data;
+  int blocks = data->blocks;
+  long size = data->size;
+
   int i;
+
   for (i = 0; i < blocks; i++) {
     char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
     FILE *tmp = tmpfile();
@@ -285,9 +295,19 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
 
   fread(file, sizeof(char), size, fp);
 
-  create_splits(file, blocks, size);
+  t_thread_pass *pass_splits = (t_thread_pass *) malloc(sizeof(t_thread_pass));
+  t_thread_pass *pass_write = (t_thread_pass *) malloc(sizeof(t_thread_pass));
 
-  return write_splits(store_path, blocks);
+  pass_splits->data = file;
+  pass_splits->blocks = blocks;
+  pass_splits->size = size;
+
+  pass_write->data = store_path;
+  pass_write->blocks = blocks;
+
+  create_splits(pass_splits);
+
+  return write_splits(pass_write);
 }
 
 int rebuild_file(const char* path, FILE *fp, int blocks) {
