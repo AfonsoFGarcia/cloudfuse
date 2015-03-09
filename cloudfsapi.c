@@ -250,8 +250,14 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
     fflush(tmp);
 
     push_fifo(i, tmp);
-    t_fifo_elem *elem = pop_fifo();
+    free(buf);
+  }
 
+  t_fifo_elem *elem = pop_fifo();
+
+  while (elem != NULL) {
+    FILE *tmp = elem->data;
+    i = elem->index;
     sprintf(num, ".%d.", i);
 
     char * complete ;
@@ -268,7 +274,7 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
     result = (response >= 200 && response < 300) && result;
     curl_free(encoded);
     fclose(tmp);
-    free(buf);
+    elem = pop_fifo();
   }
 
   free(file);
