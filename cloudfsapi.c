@@ -307,10 +307,10 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   pass_write->data = store_path;
   pass_write->blocks = blocks;
 
-  pthread_create(&create_thread, NULL, create_splits, pass_splits);
+  pthread_create(&create_thread, NULL, &create_splits, pass_splits);
   pthread_join(create_thread, NULL);
 
-  int *result = (int *) write_splits(pass_write)
+  int *result = (int *) write_splits(pass_write);
   int res = *result;
 
   return res;
