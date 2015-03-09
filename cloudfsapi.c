@@ -226,8 +226,7 @@ void* write_splits(void* in) {
   char* store_path = data->data;
   int blocks = data->blocks;
 
-  int* result = (int*) malloc(sizeof(int));
-  *result = 1;
+  int result = 1;
   int i = 0;
   t_fifo_elem *elem = pop_fifo();
 
@@ -243,22 +242,21 @@ void* write_splits(void* in) {
       strcat(complete,store_path);
       strcat(complete,num);
     } else {
+      pthread_exit((void*) 0);
       return 0;
     }
 
     char *encoded = curl_escape(complete, 0);
     int response = send_request("PUT", encoded, tmp, NULL, NULL);
-    *result = (response >= 200 && response < 300) && *result;
+    result = (response >= 200 && response < 300) && result;
     curl_free(encoded);
     fclose(tmp);
     elem = pop_fifo();
   }
 
-  FILE *log = fopen("/home/osboxes/log.txt", "a");
-  fprintf(log, "RESULT: %d\n", result);
-  fclose(log);
+  pthread_exit((void*) result);
 
-  return result;
+  return 0;
 }
 
 void* create_splits(void* in) {
@@ -282,6 +280,8 @@ void* create_splits(void* in) {
     push_fifo(i, tmp);
     free(buf);
   }
+
+  return 0;
 }
 
 int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
@@ -311,26 +311,15 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   pass_write->data = store_path;
   pass_write->blocks = blocks;
 
-  void * write_result;
+  int result;
 
   pthread_create(&create_thread, NULL, create_splits, pass_splits);
   pthread_create(&write_thread, NULL, write_splits, pass_write);
 
   pthread_join(create_thread, NULL);
-  pthread_join(write_thread, write_result);
+  pthread_join(write_thread, (void **)&result);
 
-  FILE *log = fopen("/home/osboxes/log.txt", "a");
-  fprintf(log, "RESULT: %d\n", write_result);
-  fclose(log);
-
-  int* result = (int*) write_result;
-  int res = (int) *result;
-
-  log = fopen("/home/osboxes/log.txt", "a");
-  fprintf(log, "RETURNING\n");
-  fclose(log);
-
-  return res;
+  return result;
 }
 
 int rebuild_file(const char* path, FILE *fp, int blocks) {
