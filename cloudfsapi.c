@@ -378,11 +378,9 @@ int rebuild_file(const char* path, FILE *fp, int blocks) {
 
     if(!inflate(tmp, store, 0)) {
       write_to_file(fp, tmp);
-      fclose(tmp);
     } else {
       fclose(tmp);
       write_to_file(fp, store);
-      fclose(store);
     }
 
   }
