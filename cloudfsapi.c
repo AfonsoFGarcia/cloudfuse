@@ -257,7 +257,7 @@ void* write_splits(void* in) {
   return result;
 }
 
-void create_splits(void* in) {
+void* create_splits(void* in) {
   t_thread_pass *data = (t_thread_pass *) in;
   char *file = data->data;
   int blocks = data->blocks;
