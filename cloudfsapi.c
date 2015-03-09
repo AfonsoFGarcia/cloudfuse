@@ -252,22 +252,8 @@ int write_splits(char* store_path, int blocks) {
   return result;
 }
 
-int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
-  long size;
-  int blocks, i;
-  char *store_path = add_dt_store(path);
-
-  fseek(fp, 0L, SEEK_END);
-  size = ftell(fp);
-  fseek(fp, 0L, SEEK_SET);
-
-  blocks = ceil((float)size/BLOCK_SIZE);
-  char* file = (char*) calloc(1, BLOCK_SIZE*blocks);
-
-  fprintf(temp, "%d", blocks);
-
-  fread(file, sizeof(char), size, fp);
-
+void create_splits(char* file, int blocks, long size) {
+  int i;
   for (i = 0; i < blocks; i++) {
     char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
     FILE *tmp = tmpfile();
@@ -281,6 +267,25 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
     push_fifo(i, tmp);
     free(buf);
   }
+}
+
+int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
+  long size;
+  int blocks;
+  char *store_path = add_dt_store(path);
+
+  fseek(fp, 0L, SEEK_END);
+  size = ftell(fp);
+  fseek(fp, 0L, SEEK_SET);
+
+  blocks = ceil((float)size/BLOCK_SIZE);
+  char* file = (char*) calloc(1, BLOCK_SIZE*blocks);
+
+  fprintf(temp, "%d", blocks);
+
+  fread(file, sizeof(char), size, fp);
+
+  create_splits(file, blocks, size);
 
   return write_splits(store_path, blocks);
 }
