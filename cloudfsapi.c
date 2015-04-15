@@ -275,20 +275,18 @@ void* create_splits(void* in) {
   for (i = 0; i < blocks; i++) {
     char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
     FILE *tmp = tmpfile();
-    FILE *store;
+    FILE *store = tmpfile();
 
     long begin = i*BLOCK_SIZE;
     long end = (i*BLOCK_SIZE+BLOCK_SIZE-1 > size ? size : i*BLOCK_SIZE+BLOCK_SIZE);
 
     fwrite(&file[i*BLOCK_SIZE], sizeof(char), end-begin, tmp);
     fflush(tmp);
+    fseek(tmp, 0L, SEEK_SET);
 
-    if(!deflate(tmp, store)) {
-      push_fifo(i, tmp);
-    } else {
-      fclose(tmp);
-      push_fifo(i, store);
-    }
+    adaptive_deflate(tmp, store);
+    fclose(tmp);
+    push_fifo(i, store);
 
     free(buf);
   }
@@ -358,7 +356,7 @@ int rebuild_file(const char* path, FILE *fp, int blocks) {
     char num[blocks];
     char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
     FILE *tmp = tmpfile();
-    FILE *store;
+    FILE *store = tmpfile();
     sprintf(num, ".%d.", i);
 
     char * complete ;
@@ -375,15 +373,13 @@ int rebuild_file(const char* path, FILE *fp, int blocks) {
     result = result && (response >= 200 && response < 300);
     curl_free(encoded);
     fflush(tmp);
+    fseek(tmp, 0L, SEEK_SET);
 
-    if(!inflate(tmp, store, 0)) {
-      write_to_file(fp, tmp);
-    } else {
-      fclose(tmp);
-      write_to_file(fp, store);
-    }
-
+    adaptive_inflate(tmp, store);
+    fclose(tmp);
+    write_to_file(fp, store);
   }
+
   fflush(fp);
   return result;
 }
@@ -762,10 +758,6 @@ int copy_objects(const char* src, const char* dst, int blocks) {
 
 int cloudfs_copy_object(const char *src, const char *dst)
 {
-  FILE *log = fopen("/home/osboxes/log.txt", "w");
-  fprintf(log, "COPY CALL HOME");
-  fclose(log);
-
   char * srcd;
   char * dstd;
   char file[] = ".";

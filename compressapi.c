@@ -1,9 +1,10 @@
 #include "compressapi.h"
+#include "zpipe.h"
 
-int inflate(FILE* input, FILE* output, int level) {
-  return 0;
+int adaptive_inflate(FILE* input, FILE* output) {
+  return inf(input, output);
 }
 
-int deflate(FILE* input, FILE* output) {
-  return 0;
+int adaptive_deflate(FILE* input, FILE* output) {
+  return def(input, output, Z_DEFAULT_COMPRESSION);
 }

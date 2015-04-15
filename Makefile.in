@@ -4,15 +4,15 @@
 CC = @CC@
 CFLAGS = @CFLAGS@ @XML_CFLAGS@ @CURL_CFLAGS@ @FUSE_CFLAGS@ @OPENSSL_CFLAGS@ -Wunused-result
 LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@ @XML_LIBS@ @CURL_LIBS@ @FUSE_LIBS@ @OPENSSL_LIBS@ -lm
+LIBS = @LIBS@ @XML_LIBS@ @CURL_LIBS@ @FUSE_LIBS@ @OPENSSL_LIBS@ -lm -lz
 INSTALL = @INSTALL@
 MKDIR_P = @MKDIR_P@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = $(DESTDIR)$(exec_prefix)/bin
 
-SOURCES=fifo_ts.c compressapi.c cloudfsapi.c cloudfuse.c
-HEADERS=fifo_ts.h compressapi.h cloudfsapi.h
+SOURCES=fifo_ts.c zpipe.c compressapi.c cloudfsapi.c cloudfuse.c
+HEADERS=fifo_ts.h zpipe.h compressapi.h cloudfsapi.h
 
 all: cloudfuse
 
