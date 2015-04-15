@@ -272,6 +272,8 @@ void* create_splits(void* in) {
 
   int i;
 
+  reset_level();
+
   for (i = 0; i < blocks; i++) {
     char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
     FILE *tmp = tmpfile();
