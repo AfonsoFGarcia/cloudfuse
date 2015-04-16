@@ -25,7 +25,6 @@
 #define RHEL5_CERTIFICATE_FILE "/etc/pki/tls/certs/ca-bundle.crt"
 
 #define REQUEST_RETRIES 4
-#define BLOCK_SIZE 100000
 
 static char storage_url[MAX_URL_SIZE];
 static char storage_token[MAX_HEADER_SIZE];
@@ -277,14 +276,14 @@ void* create_splits(void* in) {
   for (i = 0; i < blocks; i++) {
     int fifo_size_at_start = fifo_size();
 
-    char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
+    char *buf = (char*)calloc(CHUNK+1,sizeof(char));
     FILE *tmp = tmpfile();
     FILE *store = tmpfile();
 
-    long begin = i*BLOCK_SIZE;
-    long end = (i*BLOCK_SIZE+BLOCK_SIZE-1 > size ? size : i*BLOCK_SIZE+BLOCK_SIZE);
+    long begin = i*CHUNK;
+    long end = (i*CHUNK+CHUNK-1 > size ? size : i*CHUNK+CHUNK);
 
-    fwrite(&file[i*BLOCK_SIZE], sizeof(char), end-begin, tmp);
+    fwrite(&file[i*CHUNK], sizeof(char), end-begin, tmp);
     fflush(tmp);
     fseek(tmp, 0L, SEEK_SET);
 
@@ -311,8 +310,8 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   size = ftell(fp);
   fseek(fp, 0L, SEEK_SET);
 
-  blocks = ceil((float)size/BLOCK_SIZE);
-  char* file = (char*) calloc(1, BLOCK_SIZE*blocks);
+  blocks = ceil((float)size/CHUNK);
+  char* file = (char*) calloc(1, CHUNK*blocks);
 
   fprintf(temp, "%d", blocks);
 
@@ -361,7 +360,7 @@ int rebuild_file(const char* path, FILE *fp, int blocks) {
 
   for (i = 0; i < blocks; i++) {
     char num[blocks];
-    char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
+    char *buf = (char*)calloc(CHUNK+1,sizeof(char));
     FILE *tmp = tmpfile();
     FILE *store = tmpfile();
     sprintf(num, ".%d.", i);
@@ -500,7 +499,7 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
   curl_free(encoded);
   fflush(tmp);
 
-  char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
+  char *buf = (char*)calloc(CHUNK+1,sizeof(char));
   fseek(tmp, 0L, SEEK_END);
   int size = ftell(tmp);
   fseek(tmp, 0L, SEEK_SET);
@@ -705,7 +704,7 @@ int cloudfs_delete_object(const char *path)
   if (!(response >= 200 && response < 300)) return 0;
   fflush(tmp);
 
-  char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
+  char *buf = (char*)calloc(CHUNK+1,sizeof(char));
   fseek(tmp, 0L, SEEK_END);
   int size = ftell(tmp);
   fseek(tmp, 0L, SEEK_SET);
@@ -791,7 +790,7 @@ int cloudfs_copy_object(const char *src, const char *dst)
   if (!(response >= 200 && response < 300)) return 0;
   fflush(tmp);
 
-  char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
+  char *buf = (char*)calloc(CHUNK+1,sizeof(char));
   fseek(tmp, 0L, SEEK_END);
   int size = ftell(tmp);
   fseek(tmp, 0L, SEEK_SET);
