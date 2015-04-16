@@ -16,7 +16,7 @@ void reset_level() {
 
 void update_level(int diff) {
   int size = fifo_size();
-  
+
   if (size < 10) {
     if (diff <= 0) {
       compression_level = compression_level / 2;

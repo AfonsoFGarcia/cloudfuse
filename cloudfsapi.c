@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <sys/sysinfo.h>
 #ifdef __linux__
 #include <alloca.h>
 #endif
@@ -221,13 +222,23 @@ char* add_dt_store(const char* path) {
   return path_mod;
 }
 
+int write_iter;
+pthread_mutex_t write_iter_lock;
+
+int get_new_write_iter() {
+  pthread_mutex_lock(&write_iter_lock);
+  int ret = write_iter++;
+  pthread_mutex_unlock(&write_iter_lock);
+  return ret;
+}
+
 void* write_splits(void* in) {
   t_thread_pass *data = (t_thread_pass *) in;
   char* store_path = data->data;
   int blocks = data->blocks;
 
   intptr_t result = 1;
-  int i = 0;
+  int i = get_new_write_iter();
   t_fifo_elem *elem = pop_fifo();
 
   while (i < blocks) {
@@ -252,7 +263,7 @@ void* write_splits(void* in) {
       result = (response >= 200 && response < 300) && result;
       curl_free(encoded);
       fclose(tmp);
-      i++;
+      i = get_new_write_iter();
     }
     elem = pop_fifo();
   }
@@ -293,7 +304,7 @@ void* create_splits(void* in) {
 
     free(buf);
 
-    int fifo_diff = fifo_size_at_start - fifo_size();
+    int fifo_diff = fifo_size() - fifo_size_at_start;
     update_level(fifo_diff);
   }
 
@@ -304,7 +315,9 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   long size;
   int blocks;
   char *store_path = add_dt_store(path);
-  pthread_t create_thread, write_thread;
+  pthread_t create_thread, write_thread, write_thread_2;
+  int n_write_threads = get_nprocs()*2;
+  pthread_t *write_threads = (pthread_t*) malloc(n_write_threads*sizeof(pthread_t));
 
   fseek(fp, 0L, SEEK_END);
   size = ftell(fp);
@@ -317,7 +330,7 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
 
   if(fread(file, sizeof(char), size, fp) != size)
     return 0;
-
+  
   t_thread_pass *pass_splits = (t_thread_pass *) malloc(sizeof(t_thread_pass));
   t_thread_pass *pass_write = (t_thread_pass *) malloc(sizeof(t_thread_pass));
 
@@ -329,13 +342,25 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   pass_write->data = store_path;
   pass_write->blocks = blocks;
 
-  int result;
+  int result = 1;
+
+  pthread_mutex_init(&write_iter_lock, NULL);
+  write_iter = 0;
+  int i = 0;
 
   pthread_create(&create_thread, NULL, create_splits, pass_splits);
-  pthread_create(&write_thread, NULL, write_splits, pass_write);
+  for(i = 0; i < n_write_threads; i++) {
+    pthread_create(&write_threads[i], NULL, write_splits, pass_write);
+  }
 
   pthread_join(create_thread, NULL);
-  pthread_join(write_thread, (void **)&result);
+  for(i = 0; i < n_write_threads; i++) {
+    int res;
+    pthread_join(write_threads[i], (void **)&res);
+    result = result && res;
+  }
+
+  pthread_mutex_destroy(&write_iter_lock);
 
   return result;
 }
