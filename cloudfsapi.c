@@ -275,6 +275,8 @@ void* create_splits(void* in) {
   reset_level();
 
   for (i = 0; i < blocks; i++) {
+    int fifo_size_at_start = fifo_size();
+
     char *buf = (char*)calloc(BLOCK_SIZE+1,sizeof(char));
     FILE *tmp = tmpfile();
     FILE *store = tmpfile();
@@ -291,6 +293,9 @@ void* create_splits(void* in) {
     push_fifo(i, store);
 
     free(buf);
+
+    int fifo_diff = fifo_size_at_start - fifo_size();
+    update_level(fifo_diff);
   }
 
   return 0;

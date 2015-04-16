@@ -8,5 +8,6 @@
   int adaptive_inflate(FILE* input, FILE* output);
   int adaptive_deflate(FILE* input, FILE* output);
   void reset_level();
+  void update_level(int diff);
 
 #endif
