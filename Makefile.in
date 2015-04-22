@@ -17,7 +17,7 @@ HEADERS=fifo_ts.h zpipe.h compressapi.h cloudfsapi.h
 all: cloudfuse
 
 install: all $(bindir)
-	$(INSTALL) cloudfuse $(bindir)/cloudfuse
+	$(INSTALL) cloudfuse $(bindir)/adaptfuse
 
 uninstall:
 	/bin/rm -f $(bindir)/cloudfuse
