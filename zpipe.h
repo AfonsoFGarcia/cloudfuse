@@ -16,7 +16,7 @@
 
 	#define CHUNK 131072
 
-	int def(unsigned char *source, FILE *dest, int level, int size);
+	int def(FILE *source, FILE *dest, int level);
 	int inf(FILE *source, FILE *dest);
 
 #endif
