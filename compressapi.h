@@ -6,7 +6,7 @@
 #define COMPRESS_GUARD
 
   int adaptive_inflate(FILE* input, FILE* output);
-  int adaptive_deflate(FILE* input, FILE* output);
+  int adaptive_deflate(unsigned char* input, FILE* output, int size);
   void reset_level();
   void update_level(int diff);
 
