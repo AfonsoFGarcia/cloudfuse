@@ -288,18 +288,11 @@ void* create_splits(void* in) {
     int fifo_size_at_start = fifo_size();
 
     char *buf = (char*)calloc(CHUNK+1,sizeof(char));
-    FILE *tmp = tmpfile();
     FILE *store = tmpfile();
 
-    long begin = i*CHUNK;
-    long end = (i*CHUNK+CHUNK-1 > size ? size : i*CHUNK+CHUNK);
+    long size = (i*CHUNK+CHUNK-1 > size ? size : i*CHUNK+CHUNK) - i*CHUNK;
 
-    fwrite(&file[i*CHUNK], sizeof(char), end-begin, tmp);
-    fflush(tmp);
-    fseek(tmp, 0L, SEEK_SET);
-
-    adaptive_deflate(tmp, store);
-    fclose(tmp);
+    adaptive_deflate(&file[i*CHUNK], store, size);
     push_fifo(i, store);
 
     free(buf);

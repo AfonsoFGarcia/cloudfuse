@@ -6,8 +6,8 @@ int adaptive_inflate(FILE* input, FILE* output) {
   return inf(input, output);
 }
 
-int adaptive_deflate(FILE* input, FILE* output) {
-  return def(input, output, compression_level);
+int adaptive_deflate(unsigned char* input, FILE* output, int size) {
+  return def(input, output, compression_level, size);
 }
 
 void reset_level() {
