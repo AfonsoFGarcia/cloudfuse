@@ -316,8 +316,7 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   int blocks;
   char *store_path = add_dt_store(path);
   pthread_t create_thread, write_thread, write_thread_2;
-  int n_write_threads = get_nprocs()*2;
-  pthread_t *write_threads = (pthread_t*) malloc(n_write_threads*sizeof(pthread_t));
+  pthread_t *write_threads = (pthread_t*) malloc(NUM_THREADS*sizeof(pthread_t));
 
   fseek(fp, 0L, SEEK_END);
   size = ftell(fp);
@@ -349,12 +348,12 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   int i = 0;
 
   pthread_create(&create_thread, NULL, create_splits, pass_splits);
-  for(i = 0; i < n_write_threads; i++) {
+  for(i = 0; i < NUM_THREADS; i++) {
     pthread_create(&write_threads[i], NULL, write_splits, pass_write);
   }
 
   pthread_join(create_thread, NULL);
-  for(i = 0; i < n_write_threads; i++) {
+  for(i = 0; i < NUM_THREADS; i++) {
     int res;
     pthread_join(write_threads[i], (void **)&res);
     result = result && res;

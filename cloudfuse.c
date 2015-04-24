@@ -433,6 +433,8 @@ static struct options {
     char region[OPTION_SIZE];
     char use_snet[OPTION_SIZE];
     char verify_ssl[OPTION_SIZE];
+    char num_threads[OPTION_SIZE];
+    char chunk_size[OPTION_SIZE];
 } options = {
     .username = "",
     .password = "",
@@ -442,6 +444,8 @@ static struct options {
     .region = "",
     .use_snet = "false",
     .verify_ssl = "true",
+    .num_threads = "1",
+    .chunk_size = "131072",
 };
 
 int parse_option(void *data, const char *arg, int key, struct fuse_args *outargs)
@@ -454,6 +458,8 @@ int parse_option(void *data, const char *arg, int key, struct fuse_args *outargs
       sscanf(arg, " authurl = %[^\r\n ]", options.authurl) ||
       sscanf(arg, " region = %[^\r\n ]", options.region) ||
       sscanf(arg, " use_snet = %[^\r\n ]", options.use_snet) ||
+      sscanf(arg, " num_threads = %[^\r\n ]", options.use_snet) ||
+      sscanf(arg, " chunk_size = %[^\r\n ]", options.use_snet) ||
       sscanf(arg, " verify_ssl = %[^\r\n ]", options.verify_ssl))
     return 0;
   if (!strcmp(arg, "-f") || !strcmp(arg, "-d") || !strcmp(arg, "debug"))
@@ -479,6 +485,9 @@ int main(int argc, char **argv)
   fuse_opt_parse(&args, &options, NULL, parse_option);
 
   cache_timeout = atoi(options.cache_timeout);
+  NUM_THREADS = atoi(options.num_threads);
+  CHUNK = atoi(options.chunk_size);
+
 
   if (!*options.username || !*options.password)
   {

@@ -14,7 +14,7 @@
 	#  define SET_BINARY_MODE(file)
 	#endif
 
-	#define CHUNK 131072
+	int CHUNK;
 
 	int def(FILE *source, FILE *dest, int level);
 	int inf(FILE *source, FILE *dest);
