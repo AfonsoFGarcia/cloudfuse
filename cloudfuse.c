@@ -458,8 +458,8 @@ int parse_option(void *data, const char *arg, int key, struct fuse_args *outargs
       sscanf(arg, " authurl = %[^\r\n ]", options.authurl) ||
       sscanf(arg, " region = %[^\r\n ]", options.region) ||
       sscanf(arg, " use_snet = %[^\r\n ]", options.use_snet) ||
-      sscanf(arg, " num_threads = %[^\r\n ]", options.use_snet) ||
-      sscanf(arg, " chunk_size = %[^\r\n ]", options.use_snet) ||
+      sscanf(arg, " num_threads = %[^\r\n ]", options.num_threads) ||
+      sscanf(arg, " chunk_size = %[^\r\n ]", options.chunk_size) ||
       sscanf(arg, " verify_ssl = %[^\r\n ]", options.verify_ssl))
     return 0;
   if (!strcmp(arg, "-f") || !strcmp(arg, "-d") || !strcmp(arg, "debug"))
