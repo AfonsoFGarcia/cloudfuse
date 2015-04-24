@@ -24,8 +24,6 @@ int def(unsigned char *source, FILE *dest, int level, int size)
 {
 
     FILE *logg = fopen("/home/inteluser/afonso/log.txt", "w");
-    fprintf(logg, "Starting deflate....\n");
-    fflush(logg);
 
     int ret;
     unsigned have;
@@ -37,24 +35,22 @@ int def(unsigned char *source, FILE *dest, int level, int size)
     strm.zfree = Z_NULL;
     strm.opaque = Z_NULL;
     ret = deflateInit(&strm, level);
-    if (ret != Z_OK) {
-        fprintf(logg, "Error at deflateInit!\n");
-        fclose(logg);
+    if (ret != Z_OK)
         return ret;
-    }
 
     strm.avail_in = size;
     strm.next_in = source;
-
-    fprintf(logg, "Starting deflate...\n");
-    fflush(logg);
 
     /* run deflate() on input until output buffer not full, finish
        compression if all of source has been read in */
     do {
         strm.avail_out = CHUNK;
         strm.next_out = out;
+        fprintf(logg, "Starting deflate...\n");
+        fflush(logg);
         ret = deflate(&strm, Z_FINISH);    /* no bad return value */
+        fprintf(logg, "No crap!...\n");
+        fflush(logg);
         assert(ret != Z_STREAM_ERROR);  /* state not clobbered */
         have = CHUNK - strm.avail_out;
         if (fwrite(out, 1, have, dest) != have || ferror(dest)) {
