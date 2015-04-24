@@ -23,7 +23,7 @@
 int def(unsigned char *source, FILE *dest, int level, int size)
 {
 
-    FILE *logg = fopen("/home/inteluser/afonso/log.txt". "w");
+    FILE *logg = fopen("/home/inteluser/afonso/log.txt", "w");
     fprintf(logg, "Starting deflate....\n");
 
     int ret;
