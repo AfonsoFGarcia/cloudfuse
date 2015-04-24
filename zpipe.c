@@ -25,6 +25,7 @@ int def(unsigned char *source, FILE *dest, int level, int size)
 
     FILE *logg = fopen("/home/inteluser/afonso/log.txt", "w");
     fprintf(logg, "Starting deflate....\n");
+    fflush(logg);
 
     int ret;
     unsigned have;
@@ -46,6 +47,7 @@ int def(unsigned char *source, FILE *dest, int level, int size)
     strm.next_in = source;
 
     fprintf(logg, "Starting deflate...\n");
+    fflush(logg);
 
     /* run deflate() on input until output buffer not full, finish
        compression if all of source has been read in */
