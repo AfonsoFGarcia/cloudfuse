@@ -544,11 +544,17 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
 
 int cloudfs_object_truncate(const char *path, off_t size)
 {
-  FILE *fp2 = fopen("/home/inteluser/afonso/log.txt", "w");
-  fprintf(fp2, "Went into truncate!\n");
-  fclose(fp2);
+  char * complete ;
+  char file[] = ".";
+  if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
+    complete[0] = '\0';   // ensures the memory is an empty string
+    strcat(complete,path);
+    strcat(complete,file);
+  } else {
+    return 0;
+  }
 
-  char *encoded = curl_escape(path, 0);
+  char *encoded = curl_escape(complete, 0);
   int response;
   if (size == 0)
   {
