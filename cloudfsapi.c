@@ -249,7 +249,6 @@ void* write_splits(void* in) {
 
       curl_slist *headers = NULL;
       add_header(&headers, "X-Chunk-Index", iStr);
-      add_header(&headers, "Expect", "");
 
       char *encoded = curl_escape(store_path, 0);
       int response = send_request("PUT", encoded, tmp, NULL, headers);
@@ -482,6 +481,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   
   curl_slist *headers = NULL;
   add_header(&headers, "X-Write-To-Core", "true");
+  add_header(&headers, "Expect", "");
 
   char *encoded = curl_escape(path, 0);
   int response = send_request("PUT", encoded, tmp, NULL, headers);
