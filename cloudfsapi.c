@@ -257,7 +257,7 @@ void* write_splits(void* in) {
       }
 
       char iStr[10];
-      sprintf(str, "%d", i);
+      sprintf(iStr, "%d", i);
 
       curl_slist *headers = NULL;
       add_header(&headers, "X-Chunk-Index", iStr);
