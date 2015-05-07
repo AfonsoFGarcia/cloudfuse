@@ -306,7 +306,6 @@ void* create_splits(void* in) {
 int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   long size;
   int blocks;
-  char *store_path = add_dt_store(path);
   pthread_t create_thread, write_thread, write_thread_2;
   pthread_t *write_threads = (pthread_t*) malloc(NUM_THREADS*sizeof(pthread_t));
 
@@ -330,7 +329,7 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp) {
   pass_splits->size = size;
   pass_splits->file = temp;
 
-  pass_write->data = store_path;
+  pass_write->data = path;
   pass_write->blocks = blocks;
 
   int result = 1;
