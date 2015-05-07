@@ -145,7 +145,6 @@ static int send_request(char *method, const char *path, FILE *fp,
       curl_easy_setopt(curl, CURLOPT_UPLOAD, 1);
       curl_easy_setopt(curl, CURLOPT_INFILESIZE, cloudfs_file_size(fileno(fp)));
       curl_easy_setopt(curl, CURLOPT_READDATA, fp);
-      add_header(&headers, "Expect", "");
     }
     else if (!strcasecmp(method, "GET"))
     {
