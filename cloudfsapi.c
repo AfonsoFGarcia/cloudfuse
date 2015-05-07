@@ -256,8 +256,14 @@ void* write_splits(void* in) {
         return 0;
       }
 
+      char iStr[10];
+      sprintf(str, "%d", i);
+
+      curl_slist *headers = NULL;
+      add_header(&headers, "X-Chunk-Index", iStr);
+
       char *encoded = curl_escape(complete, 0);
-      int response = send_request("PUT", encoded, tmp, NULL, NULL);
+      int response = send_request("PUT", encoded, tmp, NULL, headers);
       result = (response >= 200 && response < 300) && result;
       curl_free(encoded);
       fclose(tmp);
@@ -495,9 +501,12 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   FILE * tmp = tmpfile();
 
   split_file_and_put(path, fp, tmp);
+  
+  curl_slist *headers = NULL;
+  add_header(&headers, "X-Write-To-Core", "true");
 
   char *encoded = curl_escape(complete, 0);
-  int response = send_request("PUT", encoded, tmp, NULL, NULL);
+  int response = send_request("PUT", encoded, tmp, NULL, headers);
   curl_free(encoded);
   return (response >= 200 && response < 300);
 }
