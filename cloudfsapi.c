@@ -146,7 +146,7 @@ static int send_request(char *method, const char *path, FILE *fp,
       curl_easy_setopt(curl, CURLOPT_INFILESIZE, cloudfs_file_size(fileno(fp)));
       curl_easy_setopt(curl, CURLOPT_READDATA, fp);
     }
-    else if (!strcasecmp(method, "PUTE") && fp)
+    else if (!strcasecmp(method, "STORE") && fp)
     {
       rewind(fp);
       curl_easy_setopt(curl, CURLOPT_UPLOAD, 1);
@@ -260,7 +260,7 @@ void* write_splits(void* in) {
       add_header(&headers, "X-Chunk-Index", iStr);
 
       char *encoded = curl_escape(store_path, 0);
-      int response = send_request("PUTE", encoded, tmp, NULL, headers);
+      int response = send_request("STORE", encoded, tmp, NULL, headers);
       result = (response >= 200 && response < 300) && result;
       curl_free(encoded);
       fclose(tmp);
