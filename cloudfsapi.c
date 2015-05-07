@@ -241,20 +241,8 @@ void* write_splits(void* in) {
 
   while (i < blocks) {
     if(elem != NULL) {
-      char num[blocks];
       FILE *tmp = elem->data;
       i = elem->index;
-      sprintf(num, ".%d.", i);
-
-      char * complete ;
-      if((complete = malloc(strlen(store_path)+strlen(num)+1)) != NULL){
-        complete[0] = '\0';   // ensures the memory is an empty string
-        strcat(complete,store_path);
-        strcat(complete,num);
-      } else {
-        pthread_exit((void*) 0);
-        return 0;
-      }
 
       char iStr[10];
       sprintf(iStr, "%d", i);
@@ -262,7 +250,7 @@ void* write_splits(void* in) {
       curl_slist *headers = NULL;
       add_header(&headers, "X-Chunk-Index", iStr);
 
-      char *encoded = curl_escape(complete, 0);
+      char *encoded = curl_escape(store_path, 0);
       int response = send_request("PUT", encoded, tmp, NULL, headers);
       result = (response >= 200 && response < 300) && result;
       curl_free(encoded);
@@ -488,16 +476,6 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   fflush(fp);
   rewind(fp);
 
-  char * complete ;
-  char file[] = ".";
-  if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
-    complete[0] = '\0';   // ensures the memory is an empty string
-    strcat(complete,path);
-    strcat(complete,file);
-  } else {
-    return 0;
-  }
-
   FILE * tmp = tmpfile();
 
   split_file_and_put(path, fp, tmp);
@@ -505,7 +483,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   curl_slist *headers = NULL;
   add_header(&headers, "X-Write-To-Core", "true");
 
-  char *encoded = curl_escape(complete, 0);
+  char *encoded = curl_escape(path, 0);
   int response = send_request("PUT", encoded, tmp, NULL, headers);
   curl_free(encoded);
   return (response >= 200 && response < 300);
