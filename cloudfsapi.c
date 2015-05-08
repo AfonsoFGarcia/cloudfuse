@@ -479,7 +479,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   split_file_and_put(path, fp, tmp, size);
   
   char sSize[255];
-  sprintf(sSize, "%l", long);
+  sprintf(sSize, "%l", size);
   
   curl_slist *headers = NULL;
   add_header(&headers, "X-Write-To-Core", "true");
