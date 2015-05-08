@@ -220,7 +220,7 @@ int get_new_write_iter() {
 
 void* write_splits(void* in) {
   t_thread_pass *data = (t_thread_pass *) in;
-  char* store_path = data->path;
+  const char* store_path = data->path;
   int blocks = data->blocks;
 
   intptr_t result = 1;
