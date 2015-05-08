@@ -220,7 +220,7 @@ int get_new_write_iter() {
 
 void* write_splits(void* in) {
   t_thread_pass *data = (t_thread_pass *) in;
-  char* store_path = data->data;
+  char* store_path = data->path;
   int blocks = data->blocks;
 
   intptr_t result = 1;
@@ -312,7 +312,7 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp, long size) {
   pass_splits->size = size;
   pass_splits->file = temp;
 
-  pass_write->data = path;
+  pass_write->path = path;
   pass_write->blocks = blocks;
 
   int result = 1;
