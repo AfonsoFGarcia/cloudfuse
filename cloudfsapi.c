@@ -385,7 +385,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   
   fseek(fp, 0L, SEEK_END);
   long size = ftell(fp);
-  fseek(fp, 0L, SEEK_SET);
+  rewind(fp);
 
   split_file_and_put(path, fp, tmp, size);
   
