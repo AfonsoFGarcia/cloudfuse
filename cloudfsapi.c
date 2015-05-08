@@ -479,7 +479,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   split_file_and_put(path, fp, tmp, size);
   
   char sSize[255];
-  sprintf(sSize, "%l", size);
+  sprintf(sSize, "%ld", size);
   
   debugf("Content length: %s", sSize);
   
