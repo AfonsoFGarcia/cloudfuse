@@ -485,6 +485,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   
   curl_slist *headers = NULL;
   add_header(&headers, "X-Write-To-Core", "true");
+  add_header(&headers, "Expect", "");
   add_header(&headers, "Content-Length", sSize);
 
   char *encoded = curl_escape(path, 0);
