@@ -208,18 +208,6 @@ static size_t header_dispatch(void *ptr, size_t size, size_t nmemb, void *stream
   return size * nmemb;
 }
 
-char* add_dt_store(const char* path) {
-  unsigned long path_size = strlen(path)+1;
-  char *path_mod = (char*) calloc(1, path_size+10);
-  char dt_store[] = "/.DT_Store";
-  char *lastslash = strrchr(path, '/');
-  int pos = lastslash - path;
-  memcpy(path_mod, path, pos);
-  memcpy(&path_mod[pos], dt_store, 10);
-  memcpy(&path_mod[pos+10], lastslash, path_size-pos);
-  return path_mod;
-}
-
 int write_iter;
 pthread_mutex_t write_iter_lock;
 
@@ -350,83 +338,6 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp, long size) {
   return result;
 }
 
-void write_to_file(FILE* fp, FILE* store) {
-  fseek(store, 0L, SEEK_SET);
-
-  unsigned char buf2[255];
-  size_t size;
-  while( (size = fread(buf2, 1, sizeof(buf2), store) ) > 0)
-    fwrite(buf2, 1, size, fp);
-
-  fclose(store);
-}
-
-int rebuild_file(const char* path, FILE *fp, int blocks) {
-  int i;
-  int result = 1;
-  char *store_path = add_dt_store(path);
-
-  fseek(fp, 0L, SEEK_SET);
-
-  for (i = 0; i < blocks; i++) {
-    char num[blocks];
-    char *buf = (char*)calloc(CHUNK+1,sizeof(char));
-    FILE *tmp = tmpfile();
-    FILE *store = tmpfile();
-    sprintf(num, ".%d.", i);
-
-    char * complete ;
-    if((complete = malloc(strlen(store_path)+strlen(num)+1)) != NULL){
-      complete[0] = '\0';   // ensures the memory is an empty string
-      strcat(complete,store_path);
-      strcat(complete,num);
-    } else {
-      return 0;
-    }
-
-    char *encoded = curl_escape(complete, 0);
-    int response = send_request("GET", complete, tmp, NULL, NULL);
-    result = result && (response >= 200 && response < 300);
-    curl_free(encoded);
-    fflush(tmp);
-    fseek(tmp, 0L, SEEK_SET);
-
-    adaptive_inflate(tmp, store);
-    fclose(tmp);
-    write_to_file(fp, store);
-  }
-
-  fflush(fp);
-  return result;
-}
-
-int delete_objects(const char* path, int blocks) {
-  int i, result = 1;
-  char *store_path = add_dt_store(path);
-
-  for(i = 0; i < blocks; i++) {
-    char num[blocks];
-    sprintf(num, ".%d.", i);
-
-    char * complete ;
-    if((complete = malloc(strlen(store_path)+strlen(num)+1)) != NULL){
-      complete[0] = '\0';   // ensures the memory is an empty string
-      strcat(complete,store_path);
-      strcat(complete,num);
-    } else {
-      return 0;
-    }
-
-    char *encoded = curl_escape(complete, 0);
-
-    int response = send_request("DELETE", encoded, NULL, NULL, NULL);
-    curl_free(encoded);
-    result = result && (response >= 200 && response < 300); 
-  }
-
-  return result;
-}
-
 /*
  * Public interface
  */
@@ -490,39 +401,11 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
 
 int cloudfs_object_write_fp(const char *path, FILE *fp)
 {
-  char * complete ;
-  char file[] = ".";
-  if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
-    complete[0] = '\0';   // ensures the memory is an empty string
-    strcat(complete,path);
-    strcat(complete,file);
-  } else {
-    return 0;
-  }
-
-  char *encoded = curl_escape(complete, 0);
-  FILE *tmp = tmpfile();
-  int blocks = 0;
-  int response = send_request("GET", encoded, tmp, NULL, NULL);
+  char *encoded = curl_escape(path, 0);
+  int response = send_request("GET", encoded, fp, NULL, NULL);
   curl_free(encoded);
-  fflush(tmp);
-
-  char *buf = (char*)calloc(CHUNK+1,sizeof(char));
-  fseek(tmp, 0L, SEEK_END);
-  int size = ftell(tmp);
-  fseek(tmp, 0L, SEEK_SET);
-  if(fread(buf, sizeof(char), size, tmp) != size)
-    return 0;
-  fclose(tmp);
-
-  blocks = atoi(buf);
-
-  free(buf);
-
-  int result = rebuild_file(path, fp, blocks);
-
   fflush(fp);
-  if (((response >= 200 && response < 300) && result) || ftruncate(fileno(fp), 0))
+  if ((response >= 200 && response < 300) || ftruncate(fileno(fp), 0))
     return 1;
   rewind(fp);
   return 0;
@@ -624,11 +507,6 @@ int cloudfs_list_directory(const char *path, dir_entry **dir_list)
             char *slash = strrchr(de->name, '/');
             if (slash && (0 == *(slash + 1)))
               *slash = 0;
-            
-            // Remove trailing .
-            char *dotfile = strrchr(de->name, '.');
-            if (dotfile && (0 == *(dotfile + 1)))
-              *dotfile = 0;
 
             if (asprintf(&(de->full_name), "%s/%s", path, de->name) < 0)
               de->full_name = NULL;
@@ -694,129 +572,19 @@ void cloudfs_free_dir_list(dir_entry *dir_list)
 
 int cloudfs_delete_object(const char *path)
 {
-  
-  char * complete ;
-  char file[] = ".";
-  if((complete = malloc(strlen(path)+strlen(file)+1)) != NULL){
-    complete[0] = '\0';   // ensures the memory is an empty string
-    strcat(complete,path);
-    strcat(complete,file);
-  } else {
-    return 0;
-  }
-  char *encoded = curl_escape(complete, 0);
-
-  FILE *tmp = tmpfile();
-  int blocks = 0;
-  int response = send_request("GET", encoded, tmp, NULL, NULL);
-  if (!(response >= 200 && response < 300)) return 0;
-  fflush(tmp);
-
-  char *buf = (char*)calloc(CHUNK+1,sizeof(char));
-  fseek(tmp, 0L, SEEK_END);
-  int size = ftell(tmp);
-  fseek(tmp, 0L, SEEK_SET);
-  if(fread(buf, sizeof(char), size, tmp) != size)
-    return 0;
-  fclose(tmp);
-
-  blocks = atoi(buf);
-
-  free(buf);
-
-  int result = delete_objects(path, blocks);
-
-  response = send_request("DELETE", encoded, NULL, NULL, NULL);
+  char *encoded = curl_escape(path, 0);
+  int response = send_request("DELETE", encoded, NULL, NULL, NULL);
   curl_free(encoded);
-  
-  return result && (response >= 200 && response < 300);
-}
-
-int copy_objects(const char* src, const char* dst, int blocks) {
-  int i, result = 1;
-
-  for(i = 0; i < blocks; i++) {
-    char num[blocks];
-    sprintf(num, ".%d.", i);
-
-    char * srcd;
-    char * dstd;
-
-    if((srcd = malloc(strlen(src)+strlen(num)+1)) != NULL){
-      srcd[0] = '\0';   // ensures the memory is an empty string
-      strcat(srcd,src);
-      strcat(srcd,num);
-    } else {
-      return 0;
-    }
-    if((dstd = malloc(strlen(dst)+strlen(num)+1)) != NULL){
-      dstd[0] = '\0';   // ensures the memory is an empty string
-      strcat(dstd,dst);
-      strcat(dstd,num);
-    } else {
-      return 0;
-    }
-
-    char *dst_encoded = curl_escape(dstd, 0);
-    curl_slist *headers = NULL;
-    add_header(&headers, "X-Copy-From", srcd);
-    add_header(&headers, "Content-Length", "0");
-    int response = send_request("PUT", dst_encoded, NULL, NULL, headers);
-    curl_free(dst_encoded);
-    curl_slist_free_all(headers);
-    result = result && (response >= 200 && response < 300); 
-  }
-
-  return result;
+  return (response >= 200 && response < 300);
 }
 
 int cloudfs_copy_object(const char *src, const char *dst)
 {
-  char * srcd;
-  char * dstd;
-  char file[] = ".";
-  if((srcd = malloc(strlen(src)+strlen(file)+1)) != NULL){
-    srcd[0] = '\0';   // ensures the memory is an empty string
-    strcat(srcd,src);
-    strcat(srcd,file);
-  } else {
-    return 0;
-  }
-  if((dstd = malloc(strlen(dst)+strlen(file)+1)) != NULL){
-    dstd[0] = '\0';   // ensures the memory is an empty string
-    strcat(dstd,dst);
-    strcat(dstd,file);
-  } else {
-    return 0;
-  }
-
-  char *encoded = curl_escape(srcd, 0);
-
-  FILE *tmp = tmpfile();
-  int blocks = 0;
-  int response = send_request("GET", encoded, tmp, NULL, NULL);
-  if (!(response >= 200 && response < 300)) return 0;
-  fflush(tmp);
-
-  char *buf = (char*)calloc(CHUNK+1,sizeof(char));
-  fseek(tmp, 0L, SEEK_END);
-  int size = ftell(tmp);
-  fseek(tmp, 0L, SEEK_SET);
-  if(fread(buf, sizeof(char), size, tmp) != size)
-    return 0;
-  fclose(tmp);
-
-  blocks = atoi(buf);
-
-  free(buf);
-
-  int result = copy_objects(src, dst, blocks);
-
-  char *dst_encoded = curl_escape(dstd, 0);
+  char *dst_encoded = curl_escape(dst, 0);
   curl_slist *headers = NULL;
-  add_header(&headers, "X-Copy-From", srcd);
+  add_header(&headers, "X-Copy-From", src);
   add_header(&headers, "Content-Length", "0");
-  response = send_request("PUT", dst_encoded, NULL, NULL, headers);
+  int response = send_request("PUT", dst_encoded, NULL, NULL, headers);
   curl_free(dst_encoded);
   curl_slist_free_all(headers);
   return (response >= 200 && response < 300);
@@ -882,7 +650,7 @@ int cloudfs_connect()
   char postdata[8192] = "";
   xmlNode *top_node = NULL, *service_node = NULL, *endpoint_node = NULL;
   xmlParserCtxtPtr xmlctx = NULL;
-
+  
   if(!init_fifo()) {
     return 0;
   }
