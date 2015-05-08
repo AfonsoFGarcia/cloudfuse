@@ -378,6 +378,7 @@ void cloudfs_init()
 
 int cloudfs_object_read_fp(const char *path, FILE *fp)
 {
+  debugf("I'm here!");
   fflush(fp);
   rewind(fp);
 
