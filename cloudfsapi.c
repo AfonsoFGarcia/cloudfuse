@@ -300,6 +300,8 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp, long size) {
   char* file = (char*) calloc(1, CHUNK*blocks);
 
   fprintf(temp, "%d", blocks);
+  
+  debugf("I'm here!");
 
   if(fread(file, sizeof(char), size, fp) != size)
     return 0;
@@ -387,11 +389,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   long size = ftell(fp);
   rewind(fp);
 
-  debugf("I'm here!");
-
   split_file_and_put(path, fp, tmp, size);
-  
-  debugf("And here!");
   
   curl_slist *headers = NULL;
   add_header(&headers, "X-Write-To-Core", "true");
