@@ -381,7 +381,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   fflush(fp);
   rewind(fp);
 
-  FILE * tmp = tmpfile();
+  FILE *tmp = tmpfile();
   
   fseek(fp, 0L, SEEK_END);
   long size = ftell(fp);
@@ -395,6 +395,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
 
   char *encoded = curl_escape(path, 0);
   int response = send_request("PUT", encoded, tmp, NULL, headers);
+  fclose(tmp);
   curl_free(encoded);
   return (response >= 200 && response < 300);
 }
