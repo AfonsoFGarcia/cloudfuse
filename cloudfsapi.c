@@ -211,9 +211,15 @@ static size_t header_dispatch(void *ptr, size_t size, size_t nmemb, void *stream
 int write_iter;
 pthread_mutex_t write_iter_lock;
 
-int get_new_write_iter() {
+void set_write_iter() {
   pthread_mutex_lock(&write_iter_lock);
   int ret = write_iter++;
+  pthread_mutex_unlock(&write_iter_lock);
+}
+
+int get_write_iter() {
+  pthread_mutex_lock(&write_iter_lock);
+  int ret = write_iter;
   pthread_mutex_unlock(&write_iter_lock);
   return ret;
 }
@@ -224,7 +230,7 @@ void* write_splits(void* in) {
   int blocks = data->blocks;
 
   intptr_t result = 1;
-  int i = get_new_write_iter();
+  int i = get_write_iter();
   t_fifo_elem *elem = pop_fifo();
 
   while (i < blocks) {
@@ -243,8 +249,10 @@ void* write_splits(void* in) {
       result = (response >= 200 && response < 300) && result;
       curl_free(encoded);
       fclose(tmp);
-      i = get_new_write_iter();
+
+      set_write_iter();
     }
+    i = get_write_iter();
     elem = pop_fifo();
   }
 
@@ -300,8 +308,6 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp, long size) {
   char* file = (char*) calloc(1, CHUNK*blocks);
 
   fprintf(temp, "%d", blocks);
-  
-  debugf("I'm here!");
 
   if(fread(file, sizeof(char), size, fp) != size)
     return 0;
