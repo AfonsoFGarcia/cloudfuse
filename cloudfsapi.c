@@ -378,7 +378,6 @@ void cloudfs_init()
 
 int cloudfs_object_read_fp(const char *path, FILE *fp)
 {
-  debugf("I'm here!");
   fflush(fp);
   rewind(fp);
 
@@ -388,7 +387,11 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   long size = ftell(fp);
   rewind(fp);
 
+  debugf("I'm here!");
+
   split_file_and_put(path, fp, tmp, size);
+  
+  debugf("And here!");
   
   curl_slist *headers = NULL;
   add_header(&headers, "X-Write-To-Core", "true");
