@@ -414,7 +414,7 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
   curl_free(encoded);
   fflush(tmp);
   rewind(tmp);
-  adaptive_deflate(tmp, fp);
+  adaptive_inflate(tmp, fp);
   fflush(fp);
   if ((response >= 200 && response < 300) || ftruncate(fileno(fp), 0))
     return 1;
