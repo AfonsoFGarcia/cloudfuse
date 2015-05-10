@@ -410,7 +410,9 @@ int cloudfs_object_write_fp(const char *path, FILE *fp)
 {
   char *encoded = curl_escape(path, 0);
   FILE *tmp = tmpfile();
-  int response = send_request("GET", encoded, tmp, NULL, NULL);
+  curl_slist *headers = NULL;
+  add_header(&headers, "X-Get-Compressed", "true");
+  int response = send_request("GET", encoded, tmp, NULL, headers);
   curl_free(encoded);
   fflush(tmp);
   rewind(tmp);
