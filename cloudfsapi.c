@@ -393,12 +393,11 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   
   curl_slist *headers = NULL;
   add_header(&headers, "X-Write-To-Core", "true");
+  add_header(&headers, "Content-Length", "0");
   add_header(&headers, "Expect", "");
 
   char *encoded = curl_escape(path, 0);
-  FILE *tmp = fopen("/dev/null", "r");
-  int response = send_request("PUT", encoded, tmp, NULL, headers);
-  fclose(tmp);
+  int response = send_request("PUT", encoded, NULL, NULL, headers);
   curl_free(encoded);
   return (response >= 200 && response < 300);
 }
