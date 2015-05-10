@@ -298,13 +298,15 @@ void* create_splits(void* in) {
   return 0;
 }
 
-int split_file_and_put(const char* path, FILE* fp, long size) {
+int split_file_and_put(const char* path, FILE* fp, FILE* temp, long size) {
   int blocks;
   pthread_t create_thread, write_thread, write_thread_2;
   pthread_t *write_threads = (pthread_t*) malloc(NUM_THREADS*sizeof(pthread_t));
 
   blocks = ceil((float)size/CHUNK);
   char* file = (char*) calloc(1, CHUNK*blocks);
+
+  fprintf(temp, "%d", blocks);
 
   if(fread(file, sizeof(char), size, fp) != size)
     return 0;
@@ -391,7 +393,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   long size = ftell(fp);
   rewind(fp);
 
-  split_file_and_put(path, fp, size);
+  split_file_and_put(path, fp, tmp, size);
   
   curl_slist *headers = NULL;
   add_header(&headers, "X-Write-To-Core", "true");
