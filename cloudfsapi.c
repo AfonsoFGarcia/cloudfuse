@@ -409,8 +409,12 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
 int cloudfs_object_write_fp(const char *path, FILE *fp)
 {
   char *encoded = curl_escape(path, 0);
-  int response = send_request("GET", encoded, fp, NULL, NULL);
+  FILE *tmp = tmpfile();
+  int response = send_request("GET", encoded, tmp, NULL, NULL);
   curl_free(encoded);
+  fflush(tmp);
+  rewind(tmp);
+  adaptive_deflate(tmp, fp);
   fflush(fp);
   if ((response >= 200 && response < 300) || ftruncate(fileno(fp), 0))
     return 1;
