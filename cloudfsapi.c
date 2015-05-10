@@ -266,7 +266,6 @@ void* create_splits(void* in) {
   char *file = data->data;
   int blocks = data->blocks;
   long size = data->size;
-  FILE *meta = data->file;
 
   int i;
 
@@ -299,15 +298,13 @@ void* create_splits(void* in) {
   return 0;
 }
 
-int split_file_and_put(const char* path, FILE* fp, FILE* temp, long size) {
+int split_file_and_put(const char* path, FILE* fp, long size) {
   int blocks;
   pthread_t create_thread, write_thread, write_thread_2;
   pthread_t *write_threads = (pthread_t*) malloc(NUM_THREADS*sizeof(pthread_t));
 
   blocks = ceil((float)size/CHUNK);
   char* file = (char*) calloc(1, CHUNK*blocks);
-
-  fprintf(temp, "%d", blocks);
 
   if(fread(file, sizeof(char), size, fp) != size)
     return 0;
@@ -318,7 +315,6 @@ int split_file_and_put(const char* path, FILE* fp, FILE* temp, long size) {
   pass_splits->data = file;
   pass_splits->blocks = blocks;
   pass_splits->size = size;
-  pass_splits->file = temp;
 
   pass_write->path = path;
   pass_write->blocks = blocks;
@@ -388,20 +384,19 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
 {
   fflush(fp);
   rewind(fp);
-
-  FILE *tmp = tmpfile();
   
   fseek(fp, 0L, SEEK_END);
   long size = ftell(fp);
   rewind(fp);
 
-  split_file_and_put(path, fp, tmp, size);
+  split_file_and_put(path, fp, size);
   
   curl_slist *headers = NULL;
   add_header(&headers, "X-Write-To-Core", "true");
   add_header(&headers, "Expect", "");
 
   char *encoded = curl_escape(path, 0);
+  FILE *tmp = fopen("/dev/null", "r")
   int response = send_request("PUT", encoded, tmp, NULL, headers);
   fclose(tmp);
   curl_free(encoded);
