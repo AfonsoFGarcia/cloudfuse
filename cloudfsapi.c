@@ -396,7 +396,7 @@ int cloudfs_object_read_fp(const char *path, FILE *fp)
   add_header(&headers, "Expect", "");
 
   char *encoded = curl_escape(path, 0);
-  FILE *tmp = fopen("/dev/null", "r")
+  FILE *tmp = fopen("/dev/null", "r");
   int response = send_request("PUT", encoded, tmp, NULL, headers);
   fclose(tmp);
   curl_free(encoded);
