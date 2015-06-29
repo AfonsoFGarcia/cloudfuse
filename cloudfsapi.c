@@ -380,7 +380,7 @@ void* rebuild(void* in) {
   t_fifo_elem *elem = pop_fifo();
   
   while(elem != NULL) {
-    char num[in->blocks];
+    char num[store->blocks];
     FILE *tmp = tmpfile();
     elem->data = tmpfile();
     sprintf(num, ".%d.", elem->index);
