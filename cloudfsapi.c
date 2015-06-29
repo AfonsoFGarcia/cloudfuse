@@ -376,6 +376,7 @@ void write_to_file(FILE* fp, FILE* store) {
 void* rebuild(void* in) {
   t_rebuild_pass *data = (t_rebuild_pass *) in;
   char *store_path = add_dt_store(data->path);
+  int blocks = fifo_size();
   
   while(fifo_size() > 0) {
     t_fifo_elem *elem = pop_fifo();
@@ -389,7 +390,7 @@ void* rebuild(void* in) {
       strcat(complete,store_path);
       strcat(complete,num);
     } else {
-      return 0;
+      return (intptr_t) 0;
     }
     
     char *encoded = curl_escape(complete, 0);
@@ -403,10 +404,10 @@ void* rebuild(void* in) {
 
     adaptive_inflate(tmp, elem->data);
     fclose(tmp);
-    data->elem_array[i] = elem;
+    data->elem_array[elem->index] = elem;
   }
   
-  return 1;
+  return (intptr_t) 1;
 }
 
 int rebuild_file(const char* path, FILE *fp, int blocks) {
@@ -432,7 +433,7 @@ int rebuild_file(const char* path, FILE *fp, int blocks) {
   
   for(i = 0; i < NUM_THREADS; i++) {
     int res;
-    pthread_join(write_threads[i], (void **)&res);
+    pthread_join(rebuild_threads[i], (void **)&res);
     result = result && res;
   }
   
