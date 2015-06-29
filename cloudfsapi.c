@@ -374,14 +374,15 @@ void write_to_file(FILE* fp, FILE* store) {
 }
 
 void* rebuild(void* in) {
-  t_rebuild_pass *data = (t_rebuild_pass *) in;
-  char *store_path = add_dt_store(data->path);
+  t_rebuild_pass *store = (t_rebuild_pass *) in;
+  char *store_path = add_dt_store(store->path);
   int blocks = fifo_size();
   
   while(fifo_size() > 0) {
     t_fifo_elem *elem = pop_fifo();
     char num[blocks];
     FILE *tmp = tmpfile();
+    elem->data = tmpfile();
     sprintf(num, ".%d.", elem->index);
     
     char * complete ;
@@ -406,7 +407,7 @@ void* rebuild(void* in) {
 
     adaptive_inflate(tmp, elem->data);
     fclose(tmp);
-    data->elem_array[elem->index] = elem;
+    store->elem_array[elem->index] = elem;
   }
   
   pthread_exit((void*) 1);
@@ -418,8 +419,7 @@ int rebuild_file(const char* path, FILE *fp, int blocks) {
   int result = 1;
   
   for (i = 0; i < blocks; i++) {
-    FILE *tmp = tmpfile();
-    push_fifo(i, tmp);
+    push_fifo(i, NULL);
   }
   
   t_fifo_elem **elem_array = (t_fifo_elem**) malloc(blocks*sizeof(t_fifo_elem*));
@@ -441,6 +441,7 @@ int rebuild_file(const char* path, FILE *fp, int blocks) {
   }
   
   for(i = 0; i < blocks; i++) {
+    printf("%d/n", elem_array[i]->index);
     write_to_file(fp, elem_array[i]->data);
   }
   
