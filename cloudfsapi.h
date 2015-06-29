@@ -35,7 +35,7 @@ typedef struct thread_pass {
 } t_thread_pass;
 
 typedef struct rebuild_pass {
-  char *path;
+  const char *path;
   t_fifo_elem **elem_array;
 } t_rebuild_pass;
 
