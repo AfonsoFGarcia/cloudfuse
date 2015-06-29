@@ -377,12 +377,9 @@ void* rebuild(void* in) {
   t_rebuild_pass *store = (t_rebuild_pass *) in;
   char *store_path = add_dt_store(store->path);
   
-  debugf("In thread");
-  
   t_fifo_elem *elem = pop_fifo();
   
   while(elem != NULL) {
-    debugf("Got elem!");
     char num[store->blocks];
     FILE *tmp = tmpfile();
     elem->data = tmpfile();
@@ -405,17 +402,27 @@ void* rebuild(void* in) {
       pthread_exit((void*) 0);
       return 0;
     }
+    
+    debugf("Got chunk");
+    
     fflush(tmp);
     fseek(tmp, 0L, SEEK_SET);
+    
+    debugf("Seek set");
 
     adaptive_inflate(tmp, elem->data);
     fclose(tmp);
+    
+    debugf("Inflate");
+    
     store->elem_array[elem->index] = elem;
     
+    debugf("Store");
+    
     elem = pop_fifo();
+    
+    debugf("New elem");
   }
-  
-  debugf("Thread exit");
   
   pthread_exit((void*) 1);
   return 0;
