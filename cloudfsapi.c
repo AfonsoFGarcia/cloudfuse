@@ -377,6 +377,8 @@ void* rebuild(void* in) {
   t_rebuild_pass *store = (t_rebuild_pass *) in;
   char *store_path = add_dt_store(store->path);
   
+  debugf("In thread");
+  
   t_fifo_elem *elem = pop_fifo();
   
   while(elem != NULL) {
