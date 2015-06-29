@@ -397,31 +397,23 @@ void* rebuild(void* in) {
     
     char *encoded = curl_escape(complete, 0);
     int response = send_request("GET", complete, tmp, NULL, NULL);
+    debugf("Got chunk");
     curl_free(encoded);
-    if (response >= 200 && response < 300) {
+    debugf("Free");
+    if (response < 200 && response >= 300) {
       pthread_exit((void*) 0);
       return 0;
     }
     
-    debugf("Got chunk");
-    
     fflush(tmp);
     fseek(tmp, 0L, SEEK_SET);
-    
-    debugf("Seek set");
 
     adaptive_inflate(tmp, elem->data);
     fclose(tmp);
     
-    debugf("Inflate");
-    
     store->elem_array[elem->index] = elem;
     
-    debugf("Store");
-    
     elem = pop_fifo();
-    
-    debugf("New elem");
   }
   
   pthread_exit((void*) 1);
