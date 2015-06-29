@@ -377,7 +377,6 @@ void* rebuild(void* in) {
   t_rebuild_pass *data = (t_rebuild_pass *) in;
   char *store_path = add_dt_store(data->path);
   int blocks = fifo_size();
-  intptr_t result = 1;
   
   while(fifo_size() > 0) {
     t_fifo_elem *elem = pop_fifo();
@@ -391,16 +390,16 @@ void* rebuild(void* in) {
       strcat(complete,store_path);
       strcat(complete,num);
     } else {
-      result = 0;
-      return result;
+      pthread_exit((void*) 0);
+      return 0;
     }
     
     char *encoded = curl_escape(complete, 0);
     int response = send_request("GET", complete, tmp, NULL, NULL);
     curl_free(encoded);
     if (response >= 200 && response < 300) {
-      result = 0;
-      return result;
+      pthread_exit((void*) 0);
+      return 0;
     }
     fflush(tmp);
     fseek(tmp, 0L, SEEK_SET);
@@ -410,7 +409,8 @@ void* rebuild(void* in) {
     data->elem_array[elem->index] = elem;
   }
   
-  return result;
+  pthread_exit((void*) 1);
+  return 0;
 }
 
 int rebuild_file(const char* path, FILE *fp, int blocks) {
