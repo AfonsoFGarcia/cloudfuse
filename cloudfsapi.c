@@ -380,6 +380,7 @@ void* rebuild(void* in) {
   t_fifo_elem *elem = pop_fifo();
   
   while(elem != NULL) {
+    debugf("Got elem!");
     char num[store->blocks];
     FILE *tmp = tmpfile();
     elem->data = tmpfile();
@@ -411,6 +412,8 @@ void* rebuild(void* in) {
     
     elem = pop_fifo();
   }
+  
+  debugf("Thread exit");
   
   pthread_exit((void*) 1);
   return 0;
