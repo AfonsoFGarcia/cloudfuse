@@ -376,11 +376,11 @@ void write_to_file(FILE* fp, FILE* store) {
 void* rebuild(void* in) {
   t_rebuild_pass *store = (t_rebuild_pass *) in;
   char *store_path = add_dt_store(store->path);
-  int blocks = fifo_size();
   
-  while(fifo_size() > 0) {
-    t_fifo_elem *elem = pop_fifo();
-    char num[blocks];
+  t_fifo_elem *elem = pop_fifo();
+  
+  while(elem != NULL) {
+    char num[in->blocks];
     FILE *tmp = tmpfile();
     elem->data = tmpfile();
     sprintf(num, ".%d.", elem->index);
@@ -408,6 +408,8 @@ void* rebuild(void* in) {
     adaptive_inflate(tmp, elem->data);
     fclose(tmp);
     store->elem_array[elem->index] = elem;
+    
+    elem = pop_fifo();
   }
   
   pthread_exit((void*) 1);
@@ -427,6 +429,7 @@ int rebuild_file(const char* path, FILE *fp, int blocks) {
   
   pass->path = path;
   pass->elem_array = elem_array;
+  pass->blocks = blocks;
   
   pthread_t *rebuild_threads = (pthread_t*) malloc(NUM_THREADS*sizeof(pthread_t));
   

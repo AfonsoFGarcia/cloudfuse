@@ -37,6 +37,7 @@ typedef struct thread_pass {
 typedef struct rebuild_pass {
   const char *path;
   t_fifo_elem **elem_array;
+  int blocks;
 } t_rebuild_pass;
 
 void cloudfs_init();
