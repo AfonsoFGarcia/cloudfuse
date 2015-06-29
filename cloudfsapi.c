@@ -397,9 +397,7 @@ void* rebuild(void* in) {
     
     char *encoded = curl_escape(complete, 0);
     int response = send_request("GET", complete, tmp, NULL, NULL);
-    debugf("Got chunk");
     curl_free(encoded);
-    debugf("Free");
     if (response < 200 && response >= 300) {
       pthread_exit((void*) 0);
       return 0;
