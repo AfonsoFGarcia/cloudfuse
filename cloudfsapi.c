@@ -373,20 +373,16 @@ void write_to_file(FILE* fp, FILE* store) {
   fclose(store);
 }
 
-int rebuild_file(const char* path, FILE *fp, int blocks) {
-  int i;
-  int result = 1;
-  char *store_path = add_dt_store(path);
-
-  fseek(fp, 0L, SEEK_SET);
-
-  for (i = 0; i < blocks; i++) {
+void* rebuild(void* in) {
+  t_rebuild_pass *data = (t_rebuild_pass *) in;
+  char *store_path = add_dt_store(data->path);
+  
+  while(fifo_size() > 0) {
+    t_fifo_elem *elem = pop_fifo();
     char num[blocks];
-    char *buf = (char*)calloc(CHUNK+1,sizeof(char));
     FILE *tmp = tmpfile();
-    FILE *store = tmpfile();
-    sprintf(num, ".%d.", i);
-
+    sprintf(num, ".%d.", elem->index);
+    
     char * complete ;
     if((complete = malloc(strlen(store_path)+strlen(num)+1)) != NULL){
       complete[0] = '\0';   // ensures the memory is an empty string
@@ -395,19 +391,55 @@ int rebuild_file(const char* path, FILE *fp, int blocks) {
     } else {
       return 0;
     }
-
+    
     char *encoded = curl_escape(complete, 0);
     int response = send_request("GET", complete, tmp, NULL, NULL);
-    result = result && (response >= 200 && response < 300);
     curl_free(encoded);
+    if (response >= 200 && response < 300) {
+      return 0;
+    }
     fflush(tmp);
     fseek(tmp, 0L, SEEK_SET);
 
-    adaptive_inflate(tmp, store);
+    adaptive_inflate(tmp, elem->data);
     fclose(tmp);
-    write_to_file(fp, store);
+    data->elem_array[i] = elem;
   }
+  
+  return 1;
+}
 
+int rebuild_file(const char* path, FILE *fp, int blocks) {
+  int i;
+  int result = 1;
+  
+  for (i = 0; i < blocks; i++) {
+    FILE *tmp = tmpfile();
+    push_fifo(i, tmp);
+  }
+  
+  t_fifo_elem **elem_array = (t_fifo_elem**) malloc(blocks*sizeof(t_fifo_elem*));
+  t_rebuild_pass *pass = (t_rebuild_pass*) malloc(sizeof(t_rebuild_pass));
+  
+  pass->path = path;
+  pass->elem_array = elem_array;
+  
+  pthread_t *rebuild_threads = (pthread_t*) malloc(NUM_THREADS*sizeof(pthread_t));
+  
+  for(i = 0; i < NUM_THREADS; i++) {
+    pthread_create(&rebuild_threads[i], NULL, rebuild, pass);
+  }
+  
+  for(i = 0; i < NUM_THREADS; i++) {
+    int res;
+    pthread_join(write_threads[i], (void **)&res);
+    result = result && res;
+  }
+  
+  for(i = 0; i < blocks; i++) {
+    write_to_file(fp, elem_array[i]->data);
+  }
+  
   fflush(fp);
   return result;
 }

@@ -34,6 +34,11 @@ typedef struct thread_pass {
 	long size;
 } t_thread_pass;
 
+typedef struct rebuild_pass {
+  char *path;
+  t_fifo_elem **elem_array;
+} t_rebuild_pass;
+
 void cloudfs_init();
 void cloudfs_set_credentials(char *username, char *tenant, char *password,
                              char *authurl, char *region, int use_snet);
